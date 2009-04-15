@@ -7,10 +7,10 @@
 
 require 'bbq'
 
-if ARGV[0] && ARGV[1]
 
-  # look up CStruct name
-  def Object.const_missing name
+# look up CStruct name
+module BBQ
+  def self.const_missing name
     result = $type_registry[name]
     if result
       result
@@ -18,6 +18,9 @@ if ARGV[0] && ARGV[1]
       super name
     end      
   end
+end
+
+if ARGV[0] && ARGV[1]
 
   load ARGV[0]
 
