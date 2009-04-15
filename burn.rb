@@ -17,6 +17,12 @@ end
 
 File.open(ARGV[1], "w") do |f|
 
+  # output header guard
+  symbol = "#{File.basename(ARGV[1],'.h').upcase}_H"
+  f.puts "#ifndef #{symbol}"
+  f.puts "#define #{symbol}"
+  f.puts ""
+
   # collect all the structs
   structs = []
   ObjectSpace.each_object CStruct do |struct|
@@ -30,5 +36,9 @@ File.open(ARGV[1], "w") do |f|
   structs.each do |struct|
     f.print struct.declare
   end
+
+  # close the header guard
+  f.puts ""
+  f.puts "#endif"
 
 end
