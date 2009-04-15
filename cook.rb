@@ -32,6 +32,8 @@ else
 end
 
 File.open(ARGV[1], "w") do |f|
-  f.print $type_registry[$root.type_name].cook $root
+  str = ""
+  $type_registry[$root.type_name].cook(str, $root)
+  f.print str
 end
 

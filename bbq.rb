@@ -4,12 +4,13 @@ require 'ostruct'
 
 DEBUG_COOK = true
 
+
 # All types in the $type_registry are expected to accept the following messages.
 #
 # define_single field_name       =>  "int foo;"
 # define_array field_name, len   =>  "int foo[10];"
 # define_ptr field_name          =>  "int* foo;"
-# cook value                     =>  4 bytes
+# cook str, value                =>  adds 4 bytes to end of str
 #
 # In addition struct types need to handle the declare method
 #
@@ -37,44 +38,44 @@ class BaseType
     "#{@type_name}* #{field_name};"
   end
 
-  def cook value    
+  def cook str, value
     puts "#{@type_name} #{value.inspect}" if DEBUG_COOK
   end
 end
 
 Float32Type = BaseType.new "float"
-def Float32Type.cook value  
+def Float32Type.cook str, value  
   super
   raise "Value must be Numeric" unless value.is_a?(Numeric)
   # single precision float, little-endian byte order
   if value.nil?
-    [0].pack "e"
+    str << [0].pack("e")
   else
-    [value].pack "e"
+    str << [value].pack("e")
   end
 end
 
 Int32Type = BaseType.new "int"
-def Int32Type.cook value
+def Int32Type.cook str, value
   super
   raise "Value must be Numeric" unless value.is_a?(Numeric)
   # 32 bit signed int, little-endian byte order
   if value.nil?
-    [0].pack "i"
+    str << [0].pack("i")
   else
-    [value].pack "i"
+    str << [value].pack("i")
   end
 end
 
 Uint32Type = BaseType.new "unsigned int"
-def Uint32Type.cook value
+def Uint32Type.cook str, value
   raise "Value must be Numeric" unless value.is_a?(Numeric)
   super
-  # 32 bit unsigned int, little-endian byte order
-  if value.nil?
-    [0].pack "I"
+   # 32 bit unsigned int, little-endian byte order
+   if value.nil?
+     str << [0].pack("I")
   else
-    [value].pack "I"
+    str << [value].pack("I")
   end
 end
 
@@ -160,21 +161,20 @@ class CStruct < BaseType
     end
   end
 
-  def cook value
+  def cook str, value
     super
     # sort values of members hash by index
     sorted_fields = @fields.values.sort{|a,b| a.index <=> b.index}
 
-    binary = ""
     sorted_fields.each do |field|
       type = $type_registry[field.type_name]
       if type
         case field
         when SingleField
-          binary += type.cook value.send(field.field_name)
+          type.cook str, value.send(field.field_name)
         when ArrayField
           for i in 0...field.num_items
-            binary += type.cook value.send(field.field_name)[i]
+            type.cook str, value.send(field.field_name)[i]
           end
         when PointerField
           # TODO:
@@ -186,7 +186,6 @@ class CStruct < BaseType
         raise "Could not cook #{field.field_name} in struct #{@type_name}"
       end
     end
-    binary
   end
 
   def declare
