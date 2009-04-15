@@ -1,162 +1,224 @@
 # bbq
 
-class BasicType
+require 'ostruct'
 
-  attr_accessor :name, :default, :c_type
+DEBUG_COOK = true
 
-  def burn
-    "#{@c_type} #{@name};"
+# All types in the $type_registry are expected to accept the following messages.
+#
+# define_single field_name       =>  "int foo;"
+# define_array field_name, len   =>  "int foo[10];"
+# define_ptr field_name          =>  "int* foo;"
+# cook value                     =>  4 bytes
+#
+# In addition struct types need to handle the declare method
+#
+# delcare                       => "struct Foo {
+#                                      int32 field1;
+#                                      int32* field2;
+#                                      int32 feild3[10];
+#                                   };"
+
+class BaseType
+
+  def initialize type_name
+    @type_name = type_name
+  end
+
+  def define_single field_name
+    "#{@type_name} #{field_name};"
+  end
+
+  def define_array field_name, len
+    "#{@type_name} #{field_name}[#{len}];"
+  end
+
+  def define_ptr field_name
+    "#{@type_name}* #{field_name};"
+  end
+
+  def cook value    
+    puts "#{@type_name} #{value.inspect}" if DEBUG_COOK
   end
 end
 
-class Float32 < BasicType
-
-  def initialize name, default = nil
-    @name = name
-    @default = default
-    @c_type = "float"
+Float32Type = BaseType.new "float"
+def Float32Type.cook value  
+  super
+  raise "Value must be Numeric" unless value.is_a?(Numeric)
+  # single precision float, little-endian byte order
+  if value.nil?
+    [0].pack "e"
+  else
+    [value].pack "e"
   end
-
-  def cook value
-    # single precision float, little-endian byte order
-    if value.nil?
-      [0].pack "e"
-    else
-      [value].pack "e"
-    end
-  end
-
 end
 
-class Int32 < BasicType
-
-  def initialize name, default = nil
-    @name = name
-    @default = default
-    @c_type = "int"
+Int32Type = BaseType.new "int"
+def Int32Type.cook value
+  super
+  raise "Value must be Numeric" unless value.is_a?(Numeric)
+  # 32 bit signed int, little-endian byte order
+  if value.nil?
+    [0].pack "i"
+  else
+    [value].pack "i"
   end
-
-  def cook value
-    # 32 bit signed int, little-endian byte order
-    if value.nil?
-      [0].pack "i"
-    else
-      [value].pack "i"
-    end
-  end
-
 end
 
-class Uint32 < BasicType
-
-  def initialize name, default
-    @name = name
-    @default = default
-    @c_type = "unsigned int"
+Uint32Type = BaseType.new "unsigned int"
+def Uint32Type.cook value
+  raise "Value must be Numeric" unless value.is_a?(Numeric)
+  super
+  # 32 bit unsigned int, little-endian byte order
+  if value.nil?
+    [0].pack "I"
+  else
+    [value].pack "I"
   end
-
-  def cook value
-    # 32 bit unsigned int, little-endian byte order
-    if value.nil?
-      [0].pack "I"
-    else
-      [value].pack "I"
-    end
-  end
-
 end
 
-class Instance
+$type_registry = {:float32 => Float32Type, :int32 => Int32Type, :uint32 => Uint32Type}
 
-  attr_accessor :members
+class CStruct < BaseType
 
-  def initialize struct, hash
-    @struct = struct
+  attr_accessor :fields, :index
 
-    # init all members to default values
-    @members = {}
-    @struct.members.each do |key,value|
-      @members[key] = value.type.default
+  SingleField = Struct.new :index, :type_name, :field_name, :default_value
+  ArrayField = Struct.new :index, :type_name, :field_name, :num_items, :default_value  
+  PointerField = Struct.new :index, :type_name, :field_name
+
+  @@count = 0
+
+  def initialize type_name, &block
+    @type_name = type_name
+    @fields = {}
+    instance_eval &block
+
+    # index is used to ensure that structs get defined in the same order in ruby & the generated header
+    @index = @@count
+    @@count += 1
+
+    # keep track of all structs defined
+    $type_registry[@type_name] = self
+  end
+
+  def new hash = nil
+    # generate a new Struct instance
+
+    # init all fields to default values
+    values = {}
+
+    @fields.each do |key, value|
+      values[key] = value.default_value
     end
 
     # set values which override defaults
-    hash.each do |key,value|
-      @members[key] = value
+    if hash
+      hash.each do |key, value|
+        if @fields[key]
+          values[key] = value
+        else
+          raise "Bad field #{key} in struct #{@type_name}"
+        end
+      end
+    end
+
+    values[:type_name] = @type_name
+    OpenStruct.new(values)
+
+  end
+
+  def fixed_array type_name, field_name, num_items, default_value = nil
+    # lookup this type in registry
+    type = $type_registry[type_name]
+    if type
+      @fields[field_name] = ArrayField.new(@fields.size, type_name, field_name, num_items, default_value)
+    else
+      raise "In struct #{@type_name}, Could not make array of #{type_name}"
     end
   end
 
-  def cook
+  def pointer type_name, field_name
+    type = $type_registry[type_name]
+    if type
+      @fields[field_name] = PointerField.new(@fields.size, type_name, field_name)
+    else
+      raise "In struct #{@type_name}, Could not make pointer to #{type_name}"
+    end
+  end
+
+  def method_missing symbol, *args
+    # lookup this type in registry
+    type = $type_registry[symbol]
+    if type
+      field_name = args[0]
+      default_value = args[1]
+      @fields[field_name] = SingleField.new(@fields.size, symbol, field_name, default_value)
+    else
+      super
+    end
+  end
+
+  def cook value
+    super
+    # sort values of members hash by index
+    sorted_fields = @fields.values.sort{|a,b| a.index <=> b.index}
+
     binary = ""
-    @members.each do |key,value|
-      type = @struct.members[key].type
-      binary += type.cook value
+    sorted_fields.each do |field|
+      type = $type_registry[field.type_name]
+      if type
+        case field
+        when SingleField
+          binary += type.cook value.send(field.field_name)
+        when ArrayField
+          for i in 0...field.num_items
+            binary += type.cook value.send(field.field_name)[i]
+          end
+        when PointerField
+          # TODO:
+          raise "Don't know how to cook pointers yet!"
+        else
+          raise "Illegal field type!"
+        end
+      else
+        raise "Could not cook #{field.field_name} in struct #{@type_name}"
+      end
     end
     binary
   end
-end
 
+  def declare
+    sorted_fields = @fields.values.sort{|a,b| a.index <=> b.index}
 
-class Structure
+    # define the struct
+    lines = ["struct #{@type_name} {"]
 
-  Member = Struct.new :type, :index
+    # define each field
+    lines += sorted_fields.map do |field|
+      type = $type_registry[field.type_name]
+      if type
+        case field
+        when SingleField
+          "    " + type.define_single(field.field_name)
+        when ArrayField
+          "    " + type.define_array(field.field_name, field.num_items)
+        when PointerField
+          "    " + type.define_ptr(field.field_name)
+        else
+          raise "Illegal field type!"
+        end
+      else
+        raise "Could not find type #{field.type_name} for struct #{@type_name}"
+      end
+    end
 
-  attr_accessor :members, :name
-
-  def initialize name, &block
-    @name = name
-    @members = {}
-    @count = 0
-    instance_eval &block
-  end
-
-  def new hash
-    Instance.new self, hash
-  end
-
-  def float32 name, default
-    @members[name] = Member.new Float32.new(name, default), @count
-    @count += 1
-  end
-
-  def int32 name, default
-    @members[name] = Member.new Int32.new(name, default), @count
-    @count += 1
-  end
-
-  def uint32 name, default
-    @members[name] = Member.new Uint32.new(name, default), @count
-    @count += 1
-  end
-
-  def burn
-    # sort values of members hash by index
-    sorted_members = @members.values.sort{|a,b| a.index <=> b.index}
-
-    # burn each member type
-    lines = ["struct #{@name} {"]
-    lines += sorted_members.map{|m| "    " + m.type.burn}
+    # close struct
     lines += ["};\n"]
+
+    # return full string
     lines.join "\n"
   end
+
 end
-
-
-# example .dd file
-Polar = Structure.new :Polar do
-  float32 :radius, 0
-  float32 :theta, 0  
-  int32 :poo, 10
-end
-
-# generate header file
-print Polar.burn
-
-# example .di file
-ten = Polar.new :radius => 10, :theta=> (1/2)
-
-#p Polar.members
-#p ten.members
-
-# generate binary file
-print ten.cook
-
