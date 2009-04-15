@@ -11,6 +11,6 @@ tiles[1] = Tile.new(:mobius => ident_mobius)
 tiles[2] = Tile.new(:mobius => ident_mobius)
 tiles[3] = Tile.new(:mobius => ident_mobius)
 					
-$root = Level.new :tiles => tiles
+$root = Level.new :tiles => tiles, :numbers => (1..10).to_a
 
 	  

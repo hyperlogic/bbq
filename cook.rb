@@ -31,9 +31,43 @@ else
   exit
 end
 
+# see bbq.cpp for pointer table memory layout
+class PointerTable
+  def initialize
+    @ptrs = []
+  end
+
+  def << offset
+    @ptrs << offset
+  end
+
+  def str
+    chunk = Chunk.new
+    Uint32Type.cook chunk, @ptrs.size
+    @ptrs.each do |ptr|
+      Uint32Type.cook chunk, ptr
+    end
+    Uint32Type.cook chunk, @ptrs.size  # output num_pointers again
+    chunk.str
+  end
+end
+
+
 File.open(ARGV[1], "w") do |f|
-  str = ""
-  $type_registry[$root.type_name].cook(str, $root)
-  f.print str
+  chunk = Chunk.new
+  $type_registry[$root.type_name].cook(chunk, $root)
+  chunk.resolve_pointers
+
+  # fill up the pointer table
+  pointer_table = PointerTable.new
+  chunk.pointers.each do |ptr|
+    pointer_table << ptr.src_offset
+  end
+
+  # output pointer table
+  f.print pointer_table.str
+
+  # output main chunk
+  f.print chunk.str
 end
 

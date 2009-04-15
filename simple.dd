@@ -18,5 +18,7 @@ CStruct.new :Tile do
 end
 
 CStruct.new :Level do
+   uint32 :cookie, 0xbaadf00d
    fixed_array :Tile, :tiles, 4
+   var_array :int32, :numbers
 end
