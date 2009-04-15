@@ -1,10 +1,10 @@
 #include "bbq.h"
-#include "simple.h"
+#include "level.h"
 #include <stdio.h>
 
 int main()
 {
-	Level* level = (Level*)bbq_load("simple.bin");
+	Level* level = (Level*)bbq_load("level.bin");
 
 	printf("loaded level!\n");
 

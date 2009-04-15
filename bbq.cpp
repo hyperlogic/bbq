@@ -31,6 +31,7 @@ static int LoadFileToMemory(const char *filename, unsigned char **result)
 }
 
 // Memory layout
+//
 // p begining of file in memory.
 // p + 0 : num_pointers
 // p + 4 : offset 0

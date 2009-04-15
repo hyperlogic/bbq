@@ -1,0 +1,24 @@
+# example .dd file
+
+CStruct.new :Complex do
+  float32 :real, 0
+  float32 :imag, 0
+end
+
+CStruct.new :Mobius do
+   Complex :a
+   Complex :b
+   Complex :c
+   Complex :d
+   int32 :conj, 0
+end
+
+CStruct.new :Tile do
+  Mobius :mobius
+end
+
+CStruct.new :Level do
+   uint32 :cookie, 0xbaadf00d
+   fixed_array :Tile, :tiles, 4
+   var_array :int32, :numbers
+end
