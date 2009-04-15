@@ -1,16 +1,10 @@
-load 'simple.dd'
+load 'level.dd'
 
-ident_mobius = Mobius.new({:a => Complex.new(:real => 1, :imag => 0),
-	                       :b => Complex.new(:real => 0, :imag => 0),
-					       :c => Complex.new(:real => 0, :imag => 0),
-					       :d => Complex.new(:real => 1, :imag => 0)})
+children = []
+children[0] = Child.new :numbers => [1,2,3]
+children[1] = Child.new :numbers => [3,4]
+children[2] = Child.new :numbers => []
 
-tiles = []
-tiles[0] = Tile.new(:mobius => ident_mobius)
-tiles[1] = Tile.new(:mobius => ident_mobius)
-tiles[2] = Tile.new(:mobius => ident_mobius)
-tiles[3] = Tile.new(:mobius => ident_mobius)
-					
-$root = Level.new :tiles => tiles, :numbers => (1..10).to_a
+$root = Level.new :children => children
 
 	  

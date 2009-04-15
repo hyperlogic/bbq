@@ -2,7 +2,7 @@
 
 require 'ostruct'
 
-DEBUG_COOK = true
+DEBUG_COOK = false
 
 class Chunk
 
