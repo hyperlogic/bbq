@@ -66,3 +66,10 @@ void* bbq_load(const char* filename)
 	
 	return base;
 }
+
+void bbq_free(void* ptr)
+{
+	unsigned int* p = (unsigned int*)ptr;
+	unsigned char* base = (unsigned char*)(p - (*(p-1) + 2));  // confused yet?  check out the memory layout.
+	delete [] base;
+}
