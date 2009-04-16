@@ -3,6 +3,7 @@
 require 'ostruct'
 
 DEBUG_COOK = false
+DEBUG_ALIGN = false
 
 # hook for struct
 class Object
@@ -34,9 +35,19 @@ class Chunk
     @str.size
   end
 
+  def align alignment
+    # insert padding, if necessary
+    if @str.size % alignment != 0
+      pad = alignment - (@str.size % alignment)
+      puts "align #{alignment}, pad = #{pad}" if DEBUG_ALIGN
+      pad.times {@str << [0xad].pack("C")}
+    end
+  end
+
   def add_pointer dest_chunk
     raise "can only point to chucks" unless dest_chunk.is_a?(Chunk)
     @pointers.push Pointer.new(@str.size, dest_chunk)
+    align Uint32Type.alignment
     Uint32Type.cook self, 0
   end
 
@@ -80,7 +91,8 @@ end
 # define_single field_name       =>  "int foo;"
 # define_array field_name, len   =>  "int foo[10];"
 # define_ptr field_name          =>  "int* foo;"
-# cook chunk, value                =>  adds 4 bytes to end of chunk
+# cook chunk, value              =>  adds 4 bytes to end of chunk
+# alignment                      =>  4 (num bytes, used for alignment)
 #
 # In addition struct types need to handle the declare method
 #
@@ -92,8 +104,9 @@ end
 
 class BaseType
 
-  def initialize type_name
+  def initialize type_name, type_alignment
     @type_name = type_name
+    @type_alignment = type_alignment
   end
 
   def define_single field_name
@@ -111,33 +124,37 @@ class BaseType
   def cook chunk, value
     puts "#{@type_name} #{value.inspect}" if DEBUG_COOK
   end
+
+  def alignment
+    @type_alignment
+  end
 end
 
-Float32Type = BaseType.new "float"
+Float32Type = BaseType.new "float", 4
 def Float32Type.cook chunk, value  
   super
-  raise "Value must be Numeric" unless value.is_a?(Numeric)
   # single precision float, little-endian byte order
   if value.nil?
     chunk << [0].pack("e")
   else
+    raise "Value must be Numeric" unless value.is_a?(Numeric)
     chunk << [value].pack("e")
   end
 end
 
-Int32Type = BaseType.new "int"
+Int32Type = BaseType.new "int", 4
 def Int32Type.cook chunk, value
   super
-  raise "Value must be Numeric" unless value.is_a?(Numeric)
   # 32 bit signed int, little-endian byte order
   if value.nil?
     chunk << [0].pack("i")
   else
+    raise "Value must be Numeric" unless value.is_a?(Numeric)
     chunk << [value].pack("i")
   end
 end
 
-Uint32Type = BaseType.new "unsigned int"
+Uint32Type = BaseType.new "unsigned int", 4
 def Uint32Type.cook chunk, value
   raise "Value must be Numeric" unless value.is_a?(Numeric)
   super
@@ -149,7 +166,56 @@ def Uint32Type.cook chunk, value
   end
 end
 
-$type_registry = {:float32 => Float32Type, :int32 => Int32Type, :uint32 => Uint32Type}
+Uint16Type = BaseType.new "unsigned short", 2
+def Uint16Type.cook chunk, value
+  super
+   # 16 bit unsigned int
+   if value.nil?
+     chunk << [0].pack("S")
+  else
+     raise "Value must be Numeric" unless value.is_a?(Numeric)
+     chunk << [value].pack("S")
+  end
+end
+
+Int16Type = BaseType.new "short", 2
+def Int16Type.cook chunk, value
+  super
+   # 16 bit signed int
+   if value.nil?
+     chunk << [0].pack("s")
+  else
+     raise "Value must be Numeric" unless value.is_a?(Numeric)
+     chunk << [value].pack("s")
+  end
+end
+
+Uint8Type = BaseType.new "unsigned char", 1
+def Uint8Type.cook chunk, value
+  super
+   # 8 bit unsigned int
+   if value.nil?
+     chunk << [0].pack("C")
+  else
+     raise "Value must be Numeric" unless value.is_a?(Numeric)
+     chunk << [value].pack("C")
+  end
+end
+
+Int8Type = BaseType.new "char", 1
+def Int8Type.cook chunk, value
+  super
+   # 8 bit signed int
+   if value.nil?
+     chunk << [0].pack("c")
+  else
+     raise "Value must be Numeric" unless value.is_a?(Numeric)
+     chunk << [value].pack("c")
+  end
+end
+
+$type_registry = {:float32 => Float32Type, :int32 => Int32Type, :uint32 => Uint32Type, 
+                  :uint8 => Uint8Type, :int8 => Int8Type}
 
 class CStruct < BaseType
 
@@ -252,8 +318,10 @@ class CStruct < BaseType
       if type
         case field
         when SingleField
+          chunk.align type.alignment
           type.cook chunk, value.send(field.field_name)
         when ArrayField
+          chunk.align type.alignment
           array = value.send(field.field_name)
           for i in 0...field.num_items
             type.cook chunk, array[i]
@@ -263,7 +331,7 @@ class CStruct < BaseType
           dest_chunk = Chunk.new
           array = value.send(field.field_name)
           array.each do |elem|
-            type.cook dest_chunk, elem         
+            type.cook dest_chunk, elem  
           end
           # add a pointer
           chunk.add_pointer dest_chunk
