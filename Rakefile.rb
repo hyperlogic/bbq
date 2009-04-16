@@ -29,15 +29,15 @@ def link exe, objects
 end
 
 # generate binary blob
-file 'level.bin' => ['bbq.rb', 'cook.rb', 'level.dd', 'level.di'] do
+file 'level.bin' => ['bbq.rb', 'bbq-cook', 'level.dd', 'level.di'] do
   puts '    Generating level.bin'
-  shell 'ruby cook.rb level.di level.bin'
+  shell 'bbq-cook level.di level.bin'
 end
 
 # generate header
-file 'level.h' => ['bbq.rb', 'burn.rb', 'level.dd'] do
+file 'level.h' => ['bbq.rb', 'bbq-burn', 'level.dd'] do
   puts '    Generating level.h'
-  shell 'ruby burn.rb level.dd level.h'
+  shell 'bbq-burn level.dd level.h'
 end
 
 file 'bbq.o' => ['bbq.h', 'bbq.cpp'] do

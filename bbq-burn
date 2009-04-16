@@ -1,8 +1,10 @@
+#!/usr/bin/ruby
+
 #
 # burn - generates a header from a .dd file
 #
 #  usage:
-#      ruby burn.rb input.dd output.h
+#      bbq-burn input.dd output.h
 #
 
 require 'bbq'
@@ -11,7 +13,7 @@ if ARGV[0] && ARGV[1]
   load ARGV[0]
 else
   puts "usage:"
-  puts "  ruby burn.rb input.dd output.h"
+  puts "  bbq-burn input.dd output.h"
   exit
 end
 

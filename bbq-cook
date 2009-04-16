@@ -1,8 +1,10 @@
+#!/usr/bin/ruby
+
 #
 # cook - generates a binary blob from a .dd file & a .di file
 #
 #  usage:
-#      ruby cook.rb input.di output.bin
+#      bbq-cook input.di output.bin
 #
 
 require 'bbq'
@@ -30,7 +32,7 @@ if ARGV[0] && ARGV[1]
 
 else
   puts "usage:"
-  puts "  ruby cook.rb input.di output.bin"
+  puts "  bbq-cook input.di output.bin"
   exit
 end
 
