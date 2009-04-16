@@ -1,6 +1,6 @@
 # example .dd file
 
-struct :Child do
+struct :Child do 
   uint32 :cookie, 0xfeedf00d
   var_array :int32, :numbers
 end
