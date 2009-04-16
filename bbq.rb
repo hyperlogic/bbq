@@ -4,6 +4,17 @@ require 'ostruct'
 
 DEBUG_COOK = false
 
+# hook for struct
+class Object
+  def method_missing sym, *args, &block
+    if sym == :struct
+      CStruct.new *args, &block
+    else
+      super
+    end
+  end
+end
+
 class Chunk
 
   attr_reader :str, :pointers

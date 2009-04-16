@@ -1,11 +1,11 @@
 # example .dd file
 
-CStruct.new :Complex do
+struct :Complex do
   float32 :real, 0
   float32 :imag, 0
 end
 
-CStruct.new :Mobius do
+struct :Mobius do
    Complex :a
    Complex :b
    Complex :c
@@ -13,11 +13,11 @@ CStruct.new :Mobius do
    int32 :conj, 0
 end
 
-CStruct.new :Tile do
+struct :Tile do
   Mobius :mobius
 end
 
-CStruct.new :Level do
+struct :Level do
    uint32 :cookie, 0xbaadf00d
    fixed_array :Tile, :tiles, 4
    var_array :int32, :numbers

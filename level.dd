@@ -1,11 +1,11 @@
 # example .dd file
 
-CStruct.new :Child do
+struct :Child do
   uint32 :cookie, 0xfeedf00d
   var_array :int32, :numbers
 end
 
-CStruct.new :Level do
+struct :Level do
   uint32 :cookie, 0xbaadf00d
   var_array :Child, :children
 end
