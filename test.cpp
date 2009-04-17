@@ -4,7 +4,7 @@
 
 int main()
 {
-	Level* level = (Level*)bbq_load("level.bin");
+	bbq::Level* level = static_cast<bbq::Level*>(bbq_load("level.bin"));
 
 	printf("loaded level!\n");
 	

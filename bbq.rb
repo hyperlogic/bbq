@@ -46,7 +46,13 @@ class Chunk
 
   def add_pointer dest_chunk
     raise "can only point to chucks" unless dest_chunk.is_a?(Chunk)
-    @pointers.push Pointer.new(@str.size, dest_chunk)
+
+    # don't keep track of pointers to empty chunks
+    if dest_chunk.size > 0
+      @pointers.push Pointer.new(@str.size, dest_chunk)
+    end
+
+    # write out a null pointer, it will be fixed up later in resolve_pointers.
     align Uint32Type.alignment
     Uint32Type.cook self, 0
   end
@@ -214,8 +220,10 @@ def Int8Type.cook chunk, value
   end
 end
 
-$type_registry = {:float32 => Float32Type, :int32 => Int32Type, :uint32 => Uint32Type, 
-                  :uint8 => Uint8Type, :int8 => Int8Type}
+$type_registry = {:int32 => Int32Type, :uint32 => Uint32Type, 
+                  :int16 => Int16Type, :uint16 => Uint16Type, 
+                  :int8 => Int8Type, :uint8 => Uint8Type, 
+                  :float32 => Float32Type }
 
 class CStruct < BaseType
 
@@ -383,6 +391,13 @@ class CStruct < BaseType
 
     # return full string
     lines.join "\n"
+  end
+
+  def alignment
+    # The alignment of the first field.
+    field = @fields.values.first{|i| a.index == 0}
+    type = $type_registry[field.type_name]
+    type.alignment
   end
 
 end

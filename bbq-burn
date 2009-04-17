@@ -17,15 +17,6 @@ else
   exit
 end
 
-# hook for struct
-def Object.method_missing sym, *args
-  if sym == :struct
-    CStruct.new *args
-  else
-    super
-  end
-end
-
 File.open(ARGV[1], "w") do |f|
 
   # output header guard
@@ -33,6 +24,9 @@ File.open(ARGV[1], "w") do |f|
   f.puts "#ifndef #{symbol}"
   f.puts "#define #{symbol}"
   f.puts ""
+
+  # namespace
+  f.puts 'namespace bbq {'
 
   # collect all the structs
   structs = []
@@ -47,6 +41,9 @@ File.open(ARGV[1], "w") do |f|
   structs.each do |struct|
     f.print struct.declare
   end
+
+  # close the namespace
+  f.puts '}'
 
   # close the header guard
   f.puts ""
