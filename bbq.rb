@@ -61,22 +61,21 @@ class Chunk
     new_pointers = []
     @pointers.each do |ptr|
 
+      # align the chunk, so the thing pointed to will be 4 byte aligned.
+      # TODO: I should really keep track of the pointed to chunk's alignment requirements...
+      align 4      
+
       # resolve any pointers in the dest chunk
       ptr.dest_chunk.resolve_pointers
 
       # cook the pointer offset into a uint32
-      # this offset is the number of bytes from the pointer's location to the desitination.
+      # this offset is the number of bytes from the pointer's location to the destination.
       temp = Chunk.new
       offset = @str.size - ptr.src_offset
       Uint32Type.cook temp, offset
 
       # overrite the pointer value in the @str
       @str[ptr.src_offset, temp.size] = temp.str
-
-
-      # update the global pointer_table
-      # TODO: this only works 1 level deep
-      # $pointer_table << ptr.src_offset
 
       # append the pointers from dest_chunk onto new_pointers
       # and offset their src_offsets appropriately
