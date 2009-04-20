@@ -80,14 +80,14 @@ class Chunk
 
       # append the pointers from dest_chunk onto new_pointers
       # and offset their src_offsets appropriately
-      new_pointers += ptr.dest_chunk.pointers.map{|p| Pointer.new p.src_offset + @str.size}
+      new_pointers.concat ptr.dest_chunk.pointers.map{|p| Pointer.new p.src_offset + @str.size}
 
       # now append the dest_chunk on @str
       @str += ptr.dest_chunk.str
     end
 
     # keep track of the new_pointers
-    @pointers += new_pointers
+    @pointers.concat new_pointers
   end
 end
 
@@ -146,6 +146,13 @@ def Float32Type.cook chunk, value
     raise "Value must be Numeric" unless value.is_a?(Numeric)
     chunk << [value].pack("e")
   end
+end
+
+BoolType = BaseType.new "bool", 1
+def BoolType.cook chunk, value  
+  super
+  # 8 bit unsigned int
+  chunk << [value ? 1 : 0].pack("C")
 end
 
 Int32Type = BaseType.new "int", 4
@@ -223,7 +230,7 @@ end
 $type_registry = {:int32 => Int32Type, :uint32 => Uint32Type, 
                   :int16 => Int16Type, :uint16 => Uint16Type, 
                   :int8 => Int8Type, :uint8 => Uint8Type, 
-                  :float32 => Float32Type }
+                  :float32 => Float32Type, :bool => BoolType }
 
 class CStruct < BaseType
 
