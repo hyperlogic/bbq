@@ -22,8 +22,12 @@ class Chunk
 
   Pointer = Struct.new :src_offset, :dest_chunk
 
-  def initialize
-    @str = ""
+  def initialize str = nil
+    if str
+      @str = str
+    else
+      @str = ""
+    end
     @pointers = []
   end
 
@@ -168,12 +172,12 @@ end
 
 Uint32Type = BaseType.new "unsigned int", 4
 def Uint32Type.cook chunk, value
-  raise "Value must be Numeric" unless value.is_a?(Numeric)
   super
-   # 32 bit unsigned int, little-endian byte order
-   if value.nil?
+  # 32 bit unsigned int, little-endian byte order
+  if value.nil?
      chunk << [0].pack("I")
-  else
+   else
+     raise "Value must be Numeric" unless value.is_a?(Numeric)
     chunk << [value].pack("I")
   end
 end
@@ -238,7 +242,7 @@ class CStruct < BaseType
   SingleField = Struct.new :index, :type_name, :field_name, :default_value
   ArrayField = Struct.new :index, :type_name, :field_name, :num_items, :default_value
   VarArrayField = Struct.new :index, :type_name, :field_name, :default_value
-  PointerField = Struct.new :index, :type_name, :field_name
+  PointerField = Struct.new :index, :type_name, :field_name, :default_value
 
   @@count = 0
 
@@ -281,6 +285,8 @@ class CStruct < BaseType
 
   end
 
+  # adds a new fixed size array into struct.
+  # memory is embeded into struct. i.e. fixed_array int, my_nums, 3  => int my_nums[3];
   def fixed_array type_name, field_name, num_items, default_value = nil
     # lookup this type in registry
     type = $type_registry[type_name]
@@ -291,6 +297,8 @@ class CStruct < BaseType
     end
   end
 
+  # adds a variable length array into struct, and its associated size feild.
+  # memory is outside of struct & pointed to by field i.e. var_array int, my_nums  => int* my_nums;
   def var_array type_name, field_name, default_value = nil
     # lookup this type in registry
     type = $type_registry[type_name]
@@ -301,10 +309,11 @@ class CStruct < BaseType
     end
   end
 
-  def pointer type_name, field_name
+  # adds a pointer to a chunk of memory.  Useful for embedding raw bytes.
+  def pointer type_name, field_name, default_value = nil
     type = $type_registry[type_name]
     if type
-      @fields[field_name] = PointerField.new(@fields.size, type_name, field_name)
+      @fields[field_name] = PointerField.new(@fields.size, type_name, field_name, default_value)
     else
       raise "In struct #{@type_name}, Could not make pointer to #{type_name}"
     end
@@ -333,7 +342,11 @@ class CStruct < BaseType
         case field
         when SingleField
           chunk.align type.alignment
-          type.cook chunk, value.send(field.field_name)
+          if value
+            type.cook chunk, value.send(field.field_name)
+          else
+            type.cook chunk, nil
+          end
         when ArrayField
           chunk.align type.alignment
           array = value.send(field.field_name)
@@ -352,10 +365,14 @@ class CStruct < BaseType
           # add the size
           Uint32Type.cook chunk, array.size
         when PointerField
-          # TODO: cook chunk pointed to
-          #dest_chunk = ...
-          #chunk.add_pointer(dest_chunk)
-          raise "Don't know how to cook raw pointers yet!"
+          if value
+            dest_chunk = Chunk.new value.send(field.field_name)
+          else
+            dest_chunk = Chunk.new
+          end
+
+          # add a pointer
+          chunk.add_pointer dest_chunk          
         else
           raise "Illegal field type!"
         end
@@ -407,3 +424,4 @@ class CStruct < BaseType
   end
 
 end
+
