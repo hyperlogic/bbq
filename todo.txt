@@ -1,0 +1,36 @@
+bbq - data cooking in ruby
+----------------------------
+
+Goals
+------
+Define data definition files in a ruby dsl.
+Ability to marshal data from ruby into a binary blob.
+Ability to generate c++ code to unmarshal the binary blob into an in-memory structure.
+Fast unmarshaling code on the c++ side.  Should just be a cast & pointer fixup.
+Support for basic types: ints, floats.
+Support for heirarchical types: structs & pointers.
+* TODO: Support for Strings
+* TODO: Cooker should also be able to generate human readable dump of cooked data, for debugging.
+* TODO: Localization support.
+
+Example
+--------
+Level files for iphone game are defined in a .dd file.  Ruby DSL
+Each levels data for iphone game is in a .di file.  Ruby DSL
+bbq-cook can take a .di & a .dd and generate a binary blob (and an optional text file)
+bbq-burn can take a .dd file and generate c++ code that can read in a cooked blob file.
+
+level.dd + horsey-level.di  => bbq-cook  => binary blob
+level.dd                    => bbq-burn  => c++ code
+
+
+TODO:
+--------
+* TODO: Support for Strings
+* TODO: Cooker should also be able to generate human readable dump of cooked data, for debugging.
+* TODO: Localization support.
+
+* Handle header includes.  If a.dd loads b.dd, then the a.h should include b.h
+* Handle lib dependencies better.   If a.di loads foo.rb, then if foo.rb changes. a.bin should be rebuilt.
+* Support C, (either thru macro wizardry or making bbq.c)
+* di files are ugly.  Is there a cleaner way?

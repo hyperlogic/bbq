@@ -8,7 +8,8 @@ DEBUG_ALIGN = false
 # hook for struct
 class Object
   def method_missing sym, *args, &block
-    if sym == :struct
+    case sym
+    when :struct
       CStruct.new *args, &block
     else
       super
