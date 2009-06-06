@@ -240,10 +240,12 @@ class CStruct < BaseType
 
   attr_accessor :fields, :index
 
+  # NOTE: the index attributre is to preserve ordering when the feilds get added to the @fields hash.
   SingleField = Struct.new :index, :type_name, :field_name, :default_value
   ArrayField = Struct.new :index, :type_name, :field_name, :num_items, :default_value
   VarArrayField = Struct.new :index, :type_name, :field_name, :default_value
   PointerField = Struct.new :index, :type_name, :field_name, :default_value
+  StringField = Struct.new :index, :type_name, :field_name, :default_value
 
   @@count = 0
 
@@ -310,6 +312,11 @@ class CStruct < BaseType
     end
   end
 
+  # adds string, which will become a field of type char*.
+  def string field_name, default_value = nil
+    @fields[field_name] = StringField.new(@fields.size, :uint8, field_name, default_value)
+  end
+
   # adds a pointer to a chunk of memory.  Useful for embedding raw bytes.
   def pointer type_name, field_name, default_value = nil
     type = $type_registry[type_name]
@@ -334,8 +341,9 @@ class CStruct < BaseType
 
   def cook chunk, value
     super
+
     # sort values of members hash by index
-    sorted_fields = @fields.values.sort{|a,b| a.index <=> b.index}
+    sorted_fields = @fields.values.sort_by{|f| f.index}
 
     sorted_fields.each do |field|
       type = $type_registry[field.type_name]
@@ -365,6 +373,17 @@ class CStruct < BaseType
           chunk.add_pointer dest_chunk
           # add the size
           Uint32Type.cook chunk, array.size
+        when StringField
+          # cook string
+          dest_chunk = Chunk.new
+          string = value.send(field.field_name)
+          if string.is_a? String
+            dest_chunk << string + "\0"
+          else
+            raise "#{field.field_name} must be a String not a #{string.class}"
+          end
+          # add a pointer
+          chunk.add_pointer dest_chunk
         when PointerField
           if value
             dest_chunk = Chunk.new value.send(field.field_name)
@@ -384,7 +403,7 @@ class CStruct < BaseType
   end
 
   def declare
-    sorted_fields = @fields.values.sort{|a,b| a.index <=> b.index}
+    sorted_fields = @fields.values.sort_by{|f| f.index}
 
     # define the struct
     lines = ["struct #{@type_name} {"]
@@ -400,6 +419,8 @@ class CStruct < BaseType
           '    ' + type.define_array(field.field_name, field.num_items)
         when VarArrayField
           '    ' + type.define_ptr(field.field_name) + " " + Uint32Type.define_single("#{field.field_name}_size")
+        when StringField
+          '    ' + Int8Type.define_ptr(field.field_name)
         when PointerField
           '    ' + type.define_ptr(field.field_name)
         else
