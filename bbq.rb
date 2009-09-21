@@ -5,15 +5,18 @@ require 'ostruct'
 DEBUG_COOK = false
 DEBUG_ALIGN = false
 
-# hook for struct
 class Object
   def method_missing sym, *args, &block
-    case sym
-    when :struct
+    if sym == :struct
       CStruct.new *args, &block
+    elsif args.size == 0
+      sym
     else
       super
     end
+  end
+  def Object.const_missing sym
+    sym
   end
 end
 
@@ -331,9 +334,13 @@ class CStruct < BaseType
     # lookup this type in registry
     type = $type_registry[symbol]
     if type
-      field_name = args[0]
-      default_value = args[1]
-      @fields[field_name] = SingleField.new(@fields.size, symbol, field_name, default_value)
+      if args.size > 0
+        field_name = args[0]
+        default_value = args[1]
+        @fields[field_name] = SingleField.new(@fields.size, symbol, field_name, default_value)
+      else
+        symbol
+      end
     else
       super
     end

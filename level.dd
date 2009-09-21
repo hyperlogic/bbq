@@ -1,14 +1,14 @@
 # example .dd file
 
-struct :Child do 
-  uint32 :cookie, 0xbbbbbbbb
-  var_array :int32, :numbers
-  uint32 :cookie2, 0xcccccccc
-  uint8 :foo, 0xff
+struct Child do 
+  uint32 cookie, 0xbbbbbbbb
+  var_array int32, numbers
+  uint32 cookie2, 0xcccccccc
+  uint8 foo, 0xff
 end
 
-struct :Level do
-  uint32 :cookie, 0xaaaaaaaa
-  var_array :Child, :children
-  fixed_array :uint8, :bytes, 4
+struct Level do
+  uint32 cookie, 0xaaaaaaaa
+  var_array Child, children
+  fixed_array uint8, bytes, 4
 end
