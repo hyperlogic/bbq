@@ -10,9 +10,7 @@
 require 'bbq'
 
 if ARGV[0] && ARGV[1]
-  class BBQ
-    load ARGV[0]
-  end
+  load ARGV[0]
 else
   puts "usage:"
   puts "  bbq-burn input.dd output.h"
