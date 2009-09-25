@@ -5,8 +5,8 @@ bbq - data cooking in ruby
 ------
 Define data definition files in a ruby dsl.
 Ability to marshal data from ruby into a binary blob.
-Ability to generate c++ code to unmarshal the binary blob into an in-memory structure.
-Fast unmarshaling code on the c++ side.  Should just be a cast & pointer fixup.
+Ability to generate C++ code to unmarshal the binary blob into an in-memory structure.
+Fast unmarshaling code on the C side.  Should just be a cast & pointer fixup.
 Support for basic types: ints, floats.
 Support for heirarchical types: structs & pointers.
 * TODO: Cooker should also be able to generate human readable dump of cooked data, for debugging.
@@ -36,3 +36,4 @@ Futrue Goals
 
 * Support C, (either thru macro wizardry or making bbq.c)
 * di files are ugly.  Is there a cleaner way?
+

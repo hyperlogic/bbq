@@ -37,7 +37,7 @@ end
 # generate header
 file 'level.h' => ['bbq.rb', 'bbq-burn', 'level.dd'] do
   puts '    Generating level.h'
-  shell 'bbq-burn level.dd level.h'
+  shell 'bbq-burn -n bbq level.dd level.h'
 end
 
 file 'bbq.o' => ['bbq.h', 'bbq.cpp'] do

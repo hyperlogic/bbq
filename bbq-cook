@@ -1,4 +1,4 @@
-#!/usr/bin/ruby
+#!/opt/local/bin/ruby
 
 #
 # cook - generates a binary blob from a .dd file & a .di file
