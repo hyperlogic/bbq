@@ -15,6 +15,10 @@ options = {}
 opts = OptionParser.new do |opts|
   opts.banner = "bbq-cook : Generate a binary file from a di file.\n\tUsage: bbq-cook [options] di_file bin_file"
 
+  opts.on('-d', '--dump', 'Dump hex output to stdout') do
+    options[:dump] = true
+  end
+
   opts.on('-h', '--help', 'Display this screen') do
     puts opts
     exit
@@ -41,9 +45,7 @@ module BBQ
   end
 end
 
-puts "loading #{di_file}"
 load di_file
-puts "finished loading #{di_file}"
 
 if BBQ.data_root.nil?
   raise "Missing BBQ.data in #{di_file}"
@@ -55,37 +57,92 @@ class PointerTable
     @ptrs = []
   end
 
-  def << offset
+  def push offset
     @ptrs << offset
   end
 
-  def str
-    chunk = Chunk.new
-    Uint32Type.cook chunk, @ptrs.size
+  def build_chunk
+    @chunk = Chunk.new
+    Uint32Type.cook @chunk, @ptrs.size, "pointer table size"
     @ptrs.each do |ptr|
-      Uint32Type.cook chunk, ptr
+      Uint32Type.cook @chunk, ptr, "pointer"
     end
-    Uint32Type.cook chunk, @ptrs.size  # output num_pointers again
-    chunk.str
+    Uint32Type.cook @chunk, @ptrs.size, "pointer table size"  # output num_pointers again
   end
+
+  def chunk
+    @chunk
+  end
+
 end
 
+root = BBQ.data_root
+chunk = Chunk.new
+$type_registry[root.type_name].cook(chunk, root, "root")
+chunk.resolve_pointers
 
-File.open(ARGV[1], "w") do |f|
-  chunk = Chunk.new
-  $type_registry[BBQ.data_root.type_name].cook(chunk, BBQ.data_root)
-  chunk.resolve_pointers
+# fill up the pointer table
+pointer_table = PointerTable.new
+chunk.pointers.each do |ptr|
+  pointer_table.push ptr.src_offset
+end
+pointer_table.build_chunk
 
-  # fill up the pointer table
-  pointer_table = PointerTable.new
-  chunk.pointers.each do |ptr|
-    pointer_table << ptr.src_offset
-  end
+File.open(bin_file, "w") do |f|
 
   # output pointer table
-  f.print pointer_table.str
+  f.print pointer_table.chunk.str
 
   # output main chunk
   f.print chunk.str
+end
+
+
+def pretty_print_chunk chunk, offset
+  comments = chunk.comments.dup
+  chunk.str.size.times do |i|
+    if i % 8 == 0
+      first = true
+      while comments[0][0] < i
+        c = comments.shift
+        if first
+          puts "    ; %04x : %s" % [c[0] + offset, c[1]]
+          first = false
+        else
+          puts "                                     ; %04x : %s" % [c[0] + offset, c[1]]
+        end
+      end
+      puts ""
+
+      # start next binary line
+      print "%04x : " % [i + offset]
+    end
+
+    print " " if i % 4 == 0
+    print "%02x " % chunk.str[i]
+  end
+
+  first = true
+  while comments[0] && comments[0][0]
+    c = comments.shift
+    if first
+      puts "    ; %04x : %s" % [c[0] + offset, c[1]]
+      first = false
+    else
+      puts "                                     ; %04x : %s" % [c[0] + offset, c[1]]
+    end
+  end
+
+#  chunk.comments.each do |address, comment|
+#    puts "0x%x : %s" % [address + offset, comment]
+#  end
+end
+
+if options[:dump]
+  puts "# "
+  puts "# Binary dump of #{bin_file} generated from #{di_file}"
+  puts "# "
+  pretty_print_chunk pointer_table.chunk, 0
+  pretty_print_chunk chunk, pointer_table.chunk.size
 end
 

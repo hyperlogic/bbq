@@ -5,6 +5,7 @@
 # using a $type_registry global is bad form.  Should be a class variable or something.
 # struct hook inside of BBQ.header block should be a method and not use method_missing.
 
+# TODO: remove
 DEBUG_COOK = false
 DEBUG_ALIGN = false
 
@@ -105,20 +106,18 @@ end
 # pointers to other Chunks can be added with the add_pointer method
 class Chunk
 
-  attr_reader :str, :pointers
+  attr_reader :str, :pointers, :comments
 
   Pointer = Struct.new :src_offset, :dest_chunk
 
-  def initialize str = nil
-    if str
-      @str = str
-    else
-      @str = ""
-    end
+  def initialize
+    @str = ""
     @pointers = []
+    @comments = []
   end
 
-  def push str, *args
+  def push str, comment
+    @comments << [@str.size, comment]
     @str << str
   end
 
@@ -145,7 +144,7 @@ class Chunk
 
     # write out a null pointer, it will be fixed up later in resolve_pointers.
     align Uint32Type.alignment
-    Uint32Type.cook self, 0
+    Uint32Type.cook self, 0, "pointer"
   end
 
   def resolve_pointers
@@ -163,7 +162,7 @@ class Chunk
       # this offset is the number of bytes from the pointer's location to the destination.
       temp = Chunk.new
       offset = @str.size - ptr.src_offset
-      Uint32Type.cook temp, offset
+      Uint32Type.cook temp, offset, "offset"
 
       # overrite the pointer value in the @str
       @str[ptr.src_offset, temp.size] = temp.str
@@ -173,7 +172,13 @@ class Chunk
       new_pointers.concat ptr.dest_chunk.pointers.map{|p| Pointer.new p.src_offset + @str.size}
 
       # now append the dest_chunk on @str
+      orig_size = @str.size
       @str += ptr.dest_chunk.str
+
+      # append the comments as well
+      ptr.dest_chunk.comments.each do |comment|
+        @comments << [comment[0] + orig_size, comment[1]]
+      end
     end
 
     # keep track of the new_pointers
@@ -187,7 +192,7 @@ end
 # define_single field_name       =>  "int foo;"
 # define_array field_name, len   =>  "int foo[10];"
 # define_ptr field_name          =>  "int* foo;"
-# cook chunk, value              =>  adds 4 bytes to end of chunk
+# cook chunk, value, name        =>  adds 4 bytes to end of chunk
 # alignment                      =>  4 (num bytes, used for alignment)
 #
 # In addition struct types need to handle the declare method
@@ -217,8 +222,8 @@ class BaseType
     "#{@type_name}* #{field_name};"
   end
 
-  def cook chunk, value
-    puts "#{@type_name} #{value.inspect}" if DEBUG_COOK
+  def cook chunk, value, name
+    puts "#{@type_name} #{value.inspect} #{name}" if DEBUG_COOK
   end
 
   def alignment
@@ -227,93 +232,101 @@ class BaseType
 end
 
 Float32Type = BaseType.new "float", 4
-def Float32Type.cook chunk, value  
+def Float32Type.cook chunk, value, name
   super
+  comment = "(#{@type_name}) #{name}"
   # single precision float, little-endian byte order
   if value.nil?
-    chunk.push([0].pack("e"))
+    chunk.push([0].pack("e"), comment)
   else
-    raise "Value must be Numeric" unless value.is_a?(Numeric)
-    chunk.push([value].pack("e"))
+    raise "Value must be Numeric #{name}" unless value.is_a?(Numeric)
+    chunk.push([value].pack("e"), comment)
   end
 end
 
 BoolType = BaseType.new "bool", 1
-def BoolType.cook chunk, value  
+def BoolType.cook chunk, value, name
   super
+  comment = "(#{@type_name}) #{name}"
   # 8 bit unsigned int
-  chunk.push([value ? 1 : 0].pack("C"))
+  chunk.push([value ? 1 : 0].pack("C"), comment)
 end
 
 Int32Type = BaseType.new "int", 4
-def Int32Type.cook chunk, value
+def Int32Type.cook chunk, value, name
   super
+  comment = "(#{@type_name}) #{name}"
   # 32 bit signed int, little-endian byte order
   if value.nil?
-    chunk.push([0].pack("i"))
+    chunk.push([0].pack("i"), comment)
   else
-    raise "Value must be Numeric" unless value.is_a?(Numeric)
-    chunk.push([value].pack("i"))
+    raise "Value must be Numeric #{name}" unless value.is_a?(Numeric)
+    chunk.push([value].pack("i"), comment)
   end
 end
 
 Uint32Type = BaseType.new "unsigned int", 4
-def Uint32Type.cook chunk, value
+def Uint32Type.cook chunk, value, name
   super
+  comment = "(#{@type_name}) #{name}"
   # 32 bit unsigned int, little-endian byte order
   if value.nil?
-     chunk.push([0].pack("I"))
-   else
-     raise "Value must be Numeric" unless value.is_a?(Numeric)
-    chunk.push([value].pack("I"))
+    chunk.push([0].pack("I"), comment)
+  else
+    raise "Value must be Numeric #{name}" unless value.is_a?(Numeric)
+    chunk.push([value].pack("I"), comment)
   end
 end
 
 Uint16Type = BaseType.new "unsigned short", 2
-def Uint16Type.cook chunk, value
+def Uint16Type.cook chunk, value, name
   super
-   # 16 bit unsigned int
-   if value.nil?
-     chunk.push([0].pack("S"))
+  comment = "(#{@type_name}) #{name}"
+  # 16 bit unsigned int
+  if value.nil?
+    chunk.push([0].pack("S"), comment)
   else
-     raise "Value must be Numeric" unless value.is_a?(Numeric)
-     chunk.push([value].pack("S"))
+    raise "Value must be Numeric #{name}" unless value.is_a?(Numeric)
+    chunk.push([value].pack("S"), comment)
   end
 end
 
 Int16Type = BaseType.new "short", 2
-def Int16Type.cook chunk, value
+def Int16Type.cook chunk, value, name
   super
-   # 16 bit signed int
-   if value.nil?
-     chunk.push([0].pack("s"))
+  comment = "(#{@type_name}) #{name}"
+  # 16 bit signed int
+  if value.nil?
+    chunk.push([0].pack("s"), comment)
   else
-     raise "Value must be Numeric" unless value.is_a?(Numeric)
-     chunk.push([value].pack("s"))
+    raise "Value must be Numeric #{name}" unless value.is_a?(Numeric)
+    chunk.push([value].pack("s"), comment)
   end
 end
 
 Uint8Type = BaseType.new "unsigned char", 1
-def Uint8Type.cook chunk, value
+def Uint8Type.cook chunk, value, name
   super
-   # 8 bit unsigned int
-   if value.nil?
-     chunk.push([0].pack("C"))
+  comment = "(#{@type_name}) #{name}"
+  # 8 bit unsigned int
+  if value.nil?
+    chunk.push([0].pack("C"), comment)
   else
-     raise "Value must be Numeric" unless value.is_a?(Numeric)
-     chunk.push([value].pack("C"))
+    raise "Value must be Numeric #{name}" unless value.is_a?(Numeric)
+    chunk.push([value].pack("C"), comment)
   end
 end
 
 Int8Type = BaseType.new "char", 1
-def Int8Type.cook chunk, value
+def Int8Type.cook chunk, value, name
   super
-   # 8 bit signed int
-   if value.nil?
-     chunk.push([0].pack("c"))
+  comment = "(#{@type_name}) #{name}"
+  # 8 bit signed int
+  if value.nil?
+    chunk.push([0].pack("c"), comment)
   else
-     raise "Value must be Numeric" unless value.is_a?(Numeric)
-     chunk.push([value].pack("c"))
+    raise "Value must be Numeric #{name}" unless value.is_a?(Numeric)
+    chunk.push([value].pack("c"), comment)
   end
 end
 
@@ -429,7 +442,7 @@ class CStruct < BaseType
     end
   end
 
-  def cook chunk, value
+  def cook chunk, value, name
     super
 
     # sort values of members hash by index
@@ -437,38 +450,39 @@ class CStruct < BaseType
 
     sorted_fields.each do |field|
       type = $type_registry[field.type_name]
+      debug_name = name.to_s + "." + field.field_name.to_s
       if type
         case field
         when SingleField
           chunk.align type.alignment
           if value
-            type.cook chunk, value.send(field.field_name)
+            type.cook chunk, value.send(field.field_name), debug_name
           else
-            type.cook chunk, nil
+            type.cook chunk, nil, debug_name
           end
         when ArrayField
           chunk.align type.alignment
           array = value.send(field.field_name)
           for i in 0...field.num_items
-            type.cook chunk, array[i]
+            type.cook chunk, array[i], debug_name + "[#{i}]"
           end
         when VarArrayField
           # cook array into dest_chunk
           dest_chunk = Chunk.new
           array = value.send(field.field_name)
-          array.each do |elem|
-            type.cook dest_chunk, elem  
+          array.each_with_index do |elem, i|
+            type.cook dest_chunk, elem, debug_name + "[#{i}]"
           end
           # add a pointer
           chunk.add_pointer dest_chunk
           # add the size
-          Uint32Type.cook chunk, array.size
+          Uint32Type.cook chunk, array.size, debug_name + "_size"
         when StringField
           # cook string
           dest_chunk = Chunk.new
           string = value.send(field.field_name)
           if string.is_a? String
-            dest_chunk.push(string + "\0")
+            dest_chunk.push(string + "\0", "string", debug_name)
           else
             raise "#{field.field_name} must be a String not a #{string.class}"
           end
@@ -476,13 +490,14 @@ class CStruct < BaseType
           chunk.add_pointer dest_chunk
         when PointerField
           if value
-            dest_chunk = Chunk.new value.send(field.field_name)
+            dest_chunk = Chunk.new
+            dest_chunk.push(value.send(field.field_name), debug_name)
           else
             dest_chunk = Chunk.new
           end
 
           # add a pointer
-          chunk.add_pointer dest_chunk          
+          chunk.add_pointer dest_chunk
         else
           raise "Illegal field type!"
         end
