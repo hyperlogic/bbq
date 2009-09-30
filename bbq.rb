@@ -101,7 +101,7 @@ module BBQ
 end
 
 # Represents a binary chunk of data
-# binary data is pushed with the << operator
+# binary data is appended to end of chunk via the push method
 # pointers to other Chunks can be added with the add_pointer method
 class Chunk
 
@@ -118,7 +118,7 @@ class Chunk
     @pointers = []
   end
 
-  def << str
+  def push str, *args
     @str << str
   end
 
@@ -231,10 +231,10 @@ def Float32Type.cook chunk, value
   super
   # single precision float, little-endian byte order
   if value.nil?
-    chunk << [0].pack("e")
+    chunk.push([0].pack("e"))
   else
     raise "Value must be Numeric" unless value.is_a?(Numeric)
-    chunk << [value].pack("e")
+    chunk.push([value].pack("e"))
   end
 end
 
@@ -242,7 +242,7 @@ BoolType = BaseType.new "bool", 1
 def BoolType.cook chunk, value  
   super
   # 8 bit unsigned int
-  chunk << [value ? 1 : 0].pack("C")
+  chunk.push([value ? 1 : 0].pack("C"))
 end
 
 Int32Type = BaseType.new "int", 4
@@ -250,10 +250,10 @@ def Int32Type.cook chunk, value
   super
   # 32 bit signed int, little-endian byte order
   if value.nil?
-    chunk << [0].pack("i")
+    chunk.push([0].pack("i"))
   else
     raise "Value must be Numeric" unless value.is_a?(Numeric)
-    chunk << [value].pack("i")
+    chunk.push([value].pack("i"))
   end
 end
 
@@ -262,10 +262,10 @@ def Uint32Type.cook chunk, value
   super
   # 32 bit unsigned int, little-endian byte order
   if value.nil?
-     chunk << [0].pack("I")
+     chunk.push([0].pack("I"))
    else
      raise "Value must be Numeric" unless value.is_a?(Numeric)
-    chunk << [value].pack("I")
+    chunk.push([value].pack("I"))
   end
 end
 
@@ -274,10 +274,10 @@ def Uint16Type.cook chunk, value
   super
    # 16 bit unsigned int
    if value.nil?
-     chunk << [0].pack("S")
+     chunk.push([0].pack("S"))
   else
      raise "Value must be Numeric" unless value.is_a?(Numeric)
-     chunk << [value].pack("S")
+     chunk.push([value].pack("S"))
   end
 end
 
@@ -286,10 +286,10 @@ def Int16Type.cook chunk, value
   super
    # 16 bit signed int
    if value.nil?
-     chunk << [0].pack("s")
+     chunk.push([0].pack("s"))
   else
      raise "Value must be Numeric" unless value.is_a?(Numeric)
-     chunk << [value].pack("s")
+     chunk.push([value].pack("s"))
   end
 end
 
@@ -298,10 +298,10 @@ def Uint8Type.cook chunk, value
   super
    # 8 bit unsigned int
    if value.nil?
-     chunk << [0].pack("C")
+     chunk.push([0].pack("C"))
   else
      raise "Value must be Numeric" unless value.is_a?(Numeric)
-     chunk << [value].pack("C")
+     chunk.push([value].pack("C"))
   end
 end
 
@@ -310,10 +310,10 @@ def Int8Type.cook chunk, value
   super
    # 8 bit signed int
    if value.nil?
-     chunk << [0].pack("c")
+     chunk.push([0].pack("c"))
   else
      raise "Value must be Numeric" unless value.is_a?(Numeric)
-     chunk << [value].pack("c")
+     chunk.push([value].pack("c"))
   end
 end
 
@@ -468,7 +468,7 @@ class CStruct < BaseType
           dest_chunk = Chunk.new
           string = value.send(field.field_name)
           if string.is_a? String
-            dest_chunk << string + "\0"
+            dest_chunk.push(string + "\0")
           else
             raise "#{field.field_name} must be a String not a #{string.class}"
           end
