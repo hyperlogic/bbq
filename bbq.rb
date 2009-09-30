@@ -64,7 +64,7 @@ module BBQ
     remove_header_hooks
   end
 
-  # insert method_missing & const_missing hooks into class Object
+  # insert const_missing hook into class Object
   def BBQ.insert_data_hooks
     # const_missing hook
     meta = class << Object; self; end
@@ -74,7 +74,7 @@ module BBQ
     end
   end
 
-  # remove method_missing & const_missing hooks from Object
+  # remove const_missing hook from Object
   def BBQ.remove_data_hooks
     meta = class << Object; self; end
     meta.send(:alias_method, :const_missing, :old_const_missing)
