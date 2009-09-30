@@ -1,14 +1,33 @@
 #!/opt/local/bin/ruby
 
 #
-# cook - generates a binary blob from a .dd file & a .di file
+# bbq-cook - generates a binary blob from a .di file
 #
 #  usage:
 #      bbq-cook input.di output.bin
 #
 
 require 'bbq'
+require 'optparse'
 
+# parse cmdline args
+options = {}
+opts = OptionParser.new do |opts|
+  opts.banner = "bbq-cook : Generate a binary file from a di file.\n\tUsage: bbq-cook [options] di_file bin_file"
+
+  opts.on('-h', '--help', 'Display this screen') do
+    puts opts
+    exit
+  end
+end
+opts.parse!(ARGV)
+
+if ARGV.size != 2
+  puts opts
+  exit
+end
+
+di_file, bin_file = ARGV
 
 # look up CStruct name
 module BBQ
@@ -22,18 +41,12 @@ module BBQ
   end
 end
 
-if ARGV[0] && ARGV[1]
+puts "loading #{di_file}"
+load di_file
+puts "finished loading #{di_file}"
 
-  load ARGV[0]
-
-  if $root.nil?
-    raise "Missing root in #{ARGV[1]}"
-  end
-
-else
-  puts "usage:"
-  puts "  bbq-cook input.di output.bin"
-  exit
+if BBQ.data_root.nil?
+  raise "Missing BBQ.data in #{di_file}"
 end
 
 # see bbq.cpp for pointer table memory layout
@@ -60,7 +73,7 @@ end
 
 File.open(ARGV[1], "w") do |f|
   chunk = Chunk.new
-  $type_registry[$root.type_name].cook(chunk, $root)
+  $type_registry[BBQ.data_root.type_name].cook(chunk, BBQ.data_root)
   chunk.resolve_pointers
 
   # fill up the pointer table

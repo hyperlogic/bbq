@@ -1,7 +1,7 @@
 #!/opt/local/bin/ruby
 
 #
-# burn - generates a header from a .dd file
+# bbq-burn - generates a header from a .dd file
 #
 #  usage:
 #      bbq-burn [-n NAMESPACE] input.dd output.h
@@ -13,7 +13,7 @@ require 'optparse'
 # parse cmdline args
 options = {}
 opts = OptionParser.new do |opts|
-  opts.banner = 'Usage: bbq-burn [options] dd_file h_file'
+  opts.banner = "bbq-burn : Generate a header file from a dd file.\n\tUsage: bbq-burn [options] dd_file h_file"
 
   opts.on('-n', '--namespace NAMESPACE', 'Enclose header in a C++ namespace') do |namespace|
     options[:namespace] = namespace

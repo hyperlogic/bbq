@@ -37,3 +37,4 @@ Futrue Goals
 * Support C, (either thru macro wizardry or making bbq.c)
 * di files are ugly.  Is there a cleaner way?
 
+* support nested structures.

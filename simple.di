@@ -1,16 +1,13 @@
 load 'simple.dd'
 
-ident_mobius = BBQ::Mobius.new({:a => BBQ::Complex.new(:real => 1, :imag => 0),
-	                       :b => BBQ::Complex.new(:real => 0, :imag => 0),
-					       :c => BBQ::Complex.new(:real => 0, :imag => 0),
-					       :d => BBQ::Complex.new(:real => 1, :imag => 0)})
+BBQ.data do
 
-tiles = []
-tiles[0] = BBQ::Tile.new(:mobius => ident_mobius)
-tiles[1] = BBQ::Tile.new(:mobius => ident_mobius)
-tiles[2] = BBQ::Tile.new(:mobius => ident_mobius)
-tiles[3] = BBQ::Tile.new(:mobius => ident_mobius)
-					
-$root = BBQ::Level.new :tiles => tiles, :numbers => (1..10).to_a
+  ident = Mobius.build(:a => Complex.build(:real => 1, :imag => 0),
+                       :b => Complex.build(:real => 0, :imag => 0),
+                       :c => Complex.build(:real => 0, :imag => 0),
+                       :d => Complex.build(:real => 1, :imag => 0))
 
-	  
+  Level.build(:tiles => (0..4).map {|i| Tile.build(:mobius => ident)},
+              :numbers => (1..10).to_a)
+
+end

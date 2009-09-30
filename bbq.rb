@@ -1,13 +1,27 @@
 # bbq
 
-require 'ostruct'
+# TODO
+# Naming instances of BaseType with a capital letter is bad form (example Int32Type, FloatType)
+# using a $type_registry global is bad form.  Should be a class variable or something.
+# struct hook inside of BBQ.header block should be a method and not use method_missing.
 
 DEBUG_COOK = false
 DEBUG_ALIGN = false
 
+require 'ostruct'
+
+class OpenStruct
+  def build hash
+    hash.each do |key, value|
+      self.send("#{key}=", value)
+    end
+    self
+  end
+end
+
 module BBQ
 
-  # insert method_missing & const_missing hooks into Object
+  # insert method_missing & const_missing hooks into class Object
   def BBQ.insert_header_hooks
 
     # method_messing hook
@@ -50,8 +64,56 @@ module BBQ
     remove_header_hooks
   end
 
+  # insert method_missing & const_missing hooks into class Object
+  def BBQ.insert_data_hooks
+
+    # method_messing hook
+    Object.send(:define_method, :method_missing) do |sym, *args, &block|
+      BBQ.data_method_missing sym, *args, &block
+    end
+
+    # const_missing hook
+    meta = class << Object; self; end
+    meta.send(:alias_method, :old_const_missing, :const_missing)
+    meta.send(:define_method, :const_missing) do |sym|
+      BBQ.data_const_missing sym
+    end
+  end
+
+  # remove method_missing & const_missing hooks from Object
+  def BBQ.remove_data_hooks
+    Object.send(:undef_method, :method_missing)
+    meta = class << Object; self; end
+    meta.send(:alias_method, :const_missing, :old_const_missing)
+  end
+
+  def BBQ.data_method_missing sym, *args, &block
+    super
+  end
+
+  def BBQ.data_const_missing sym
+    type = $type_registry[sym]
+    if type
+      type.new
+    else
+      super
+    end
+  end
+
+  def BBQ.data &block
+    insert_data_hooks
+    @root = block.call
+    remove_data_hooks
+  end
+
+  def BBQ.data_root
+    @root
+  end
 end
 
+# Represents a binary chunk of data
+# binary data is pushed with the << operator
+# pointers to other Chunks can be added with the add_pointer method
 class Chunk
 
   attr_reader :str, :pointers
@@ -298,7 +360,7 @@ class CStruct < BaseType
   end
 
   def new hash = nil
-    # generate a new Struct instance
+    # generate a new OpenStruct instance
 
     # init all fields to default values
     values = {}
