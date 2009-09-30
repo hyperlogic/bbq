@@ -66,12 +66,6 @@ module BBQ
 
   # insert method_missing & const_missing hooks into class Object
   def BBQ.insert_data_hooks
-
-    # method_messing hook
-    Object.send(:define_method, :method_missing) do |sym, *args, &block|
-      BBQ.data_method_missing sym, *args, &block
-    end
-
     # const_missing hook
     meta = class << Object; self; end
     meta.send(:alias_method, :old_const_missing, :const_missing)
@@ -82,13 +76,8 @@ module BBQ
 
   # remove method_missing & const_missing hooks from Object
   def BBQ.remove_data_hooks
-    Object.send(:undef_method, :method_missing)
     meta = class << Object; self; end
     meta.send(:alias_method, :const_missing, :old_const_missing)
-  end
-
-  def BBQ.data_method_missing sym, *args, &block
-    super
   end
 
   def BBQ.data_const_missing sym
