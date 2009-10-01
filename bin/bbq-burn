@@ -1,0 +1,76 @@
+#!/opt/local/bin/ruby
+
+#
+# bbq-burn - generates a header from a .dd file
+#
+#  usage:
+#      bbq-burn [-n NAMESPACE] input.dd output.h
+#
+
+require 'bbq'
+require 'optparse'
+
+# parse cmdline args
+options = {}
+opts = OptionParser.new do |opts|
+  opts.banner = "bbq-burn : Generate a header file from a dd file.\n\tUsage: bbq-burn [options] dd_file h_file"
+
+  opts.on('-n', '--namespace NAMESPACE', 'Enclose header in a C++ namespace') do |namespace|
+    options[:namespace] = namespace
+  end
+
+  opts.on('-h', '--help', 'Display this screen') do
+    puts opts
+    exit
+  end
+end
+opts.parse!(ARGV)
+
+if ARGV.size != 2
+  puts opts
+  exit
+end
+
+dd_file, h_file = ARGV
+
+# load the dd definition
+load dd_file
+
+# output the header
+File.open(h_file, "w") do |f|
+
+  # output header guard
+  symbol = "#{File.basename(h_file,'.h').upcase}_H"
+  f.puts "#ifndef #{symbol}"
+  f.puts "#define #{symbol}"
+  f.puts ""
+
+  # namespace
+  if options[:namespace]
+    f.puts "namespace #{options[:namespace]} {"
+  end
+
+  # collect all the structs
+  structs = []
+  ObjectSpace.each_object CStruct do |struct|
+    structs.push struct
+  end
+
+  # sort them in the order they were defined in
+  structs.sort! {|a,b| a.index <=> b.index}
+
+  # generate each struct declaration
+  structs.each do |struct|
+    f.print struct.declare
+  end
+
+  # close the namespace
+  if options[:namespace]
+    f.puts '}'
+  end
+
+  # close the header guard
+  f.puts ""
+  f.puts "#endif"
+
+end

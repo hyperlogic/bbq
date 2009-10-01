@@ -1,0 +1,16 @@
+# gltest app data
+
+BBQ.header do
+  struct Color do
+    float r, 0.0
+    float g, 0.0
+    float b, 0.0
+    float a, 0.0
+  end
+
+  struct App do
+    Color clear_color
+    Color quad_color
+  end
+end
+    

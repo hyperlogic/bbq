@@ -1,0 +1,40 @@
+bbq - data cooking in ruby
+----------------------------
+
+(1.0) Goals
+------
+Define data definition files in a ruby dsl.
+Ability to marshal data from ruby into a binary blob.
+Ability to generate C++ code to unmarshal the binary blob into an in-memory structure.
+Fast unmarshaling code on the C side.  Should just be a cast & pointer fixup.
+Support for basic types: ints, floats.
+Support for heirarchical types: structs & pointers.
+* TODO: Cooker should also be able to generate human readable dump of cooked data, for debugging.
+
+Example
+--------
+Level files for iphone game are defined in a .dd file.  Ruby DSL
+Each levels data for iphone game is in a .di file.  Ruby DSL
+bbq-cook can take a .di & a .dd and generate a binary blob (and an optional text file)
+bbq-burn can take a .dd file and generate c++ code that can read in a cooked blob file.
+
+level.dd + horsey-level.di  => bbq-cook  => binary blob
+level.dd                    => bbq-burn  => c++ code
+
+
+Futrue Goals
+--------
+* TODO: Cooker should also be able to generate human readable dump of cooked data, for debugging.
+* TODO: Localization support.
+
+* Handle header includes.  If a.dd loads b.dd, then the a.h should include b.h
+* Dependencies
+  * If a.dd changes, all .di's that load a.dd should be rebuilt.  Also, the headers should be rebuilt.
+  * If a.dd includes b.dd and b.dd changes, all .di's that load a.dd should be rebuilt, Also, headers.
+  * If a.di loads foo.rb, then if foo.rb changes. a.bin should be rebuilt.
+  * if cube.di loads cube.dae then cube.bin should be rebuilt if cube.dae changes.
+
+* Support C, (either thru macro wizardry or making bbq.c)
+* di files are ugly.  Is there a cleaner way?
+
+* support nested structures.

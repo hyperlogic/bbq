@@ -1,0 +1,134 @@
+BBQ : Cooking Data with Ruby
+-----------------------------------
+
+Let’s say your doing some embedded game development and your data is generated 
+procedurally in Ruby. How do you get data from Ruby into a binary form, so that 
+you can access it directly from a C structure?
+
+With BBQ, that’s how.
+
+Overview
+-----------
+BBQ is a set of tools that do the following:
+
+ * Generates a c header file from a data description file.
+ * Cooks data from a data instance file into a binary blob.
+ * Loads in the binary blob into memory on the target machine, so you don’t have 
+   to do any messy serialization work.
+
+Data Definition
+-----------------------
+First you have to define your data in a .dd file.
+
+Here’s an example called level.dd
+
+BBQ.header do
+  struct Child do
+    uint32 cookie, 0xfeedf00d
+    var_array int32, numbers
+  end
+
+  struct :Level do
+    uint32 :cookie, 0xbaadf00d
+    var_array Child, children
+  end
+end
+
+Looks a lot like a C header file right? Well, that’s because it gets turned into 
+one when you run the burn tool.
+
+The values 0xfeedf00d & 0xbaadf00d are defaults. They can be overridden in the data 
+instance file.
+
+Generating Header Files with Burn
+---------------------------------------------
+To turn your .dd into a .h, run the burn tool.
+
+bbq-burn level.dd level.h
+
+Here’s an example of the generated header:
+
+#ifndef LEVEL_H
+#define LEVEL_H
+
+struct Child {
+    unsigned int cookie;
+    int* numbers; unsigned int numbers_size;
+};
+struct Level {
+    unsigned int cookie;
+    Child* children; unsigned int children_size;
+};
+
+#endif
+
+Now You’re Cooking with Ruby
+Ok, now lets generate some binary data with Ruby.
+
+Let’s create a file called level.di
+
+load 'level.dd'
+
+BBQ.data do
+  Level.build(:children => [Child.build(:numbers => [1,2,3]),
+                            Child.build(:numbers => [3,4]),
+                            Child.build(:numbers => [5])])
+end
+
+This data file sets up a “level” with 3 children. The first child has numbers (1,2,3) 
+the second (3,4) and the third a single number 5.
+
+Notice that because we didn’t specify values for the cookie fields they will just use 
+their defaults.
+
+Now let’s cook this sucker:
+
+bbq-cook level.di level.bin
+
+Now you end up with a binary blob ready to be copied over to your target device.
+
+Loading the Data on the Target
+--------------------------------------
+First, make sure you add bbq.cpp to your code’s project file. Then you can use the 
+bbq_load() function to read in the binary file and give you back a pointer to the root 
+of it so you can use it directly.
+
+Here’s how:
+
+#include "bbq.h"
+#include "level.h"
+#include <stdio.h>
+
+int main()
+{
+    Level* level = (Level*)bbq_load("level.bin");
+
+    printf("loaded level!\n");
+	
+    printf("level has %d children\n", level->children_size);
+
+    for (unsigned int i = 0; i < level->children_size; ++i)
+    {
+        printf("    child %d has %d numbers\n", i, level->children[i].numbers_size);
+        printf("        [ ");
+        for (unsigned int j = 0; j < level->children[i].numbers_size; ++j)
+            printf("%d ", level->children[i].numbers[j]);
+	printf("]\n");
+    }
+
+    bbq_free(level);
+
+    return 0;
+}
+
+Now when you run this guy you should get this in stdout.
+
+loaded level!
+level has 3 children
+    child 0 has 3 numbers
+        [ 1 2 3 ]
+    child 1 has 2 numbers
+        [ 3 4 ]
+    child 2 has 1 numbers
+        [ 5 ]
+
