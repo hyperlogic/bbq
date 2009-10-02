@@ -1,5 +1,6 @@
 #include "bbq.h"
 #include <stdio.h>
+#include <stdlib.h>
 
 // helper
 // TODO: use mmap instead?
@@ -16,13 +17,13 @@ static int LoadFileToMemory(const char *filename, unsigned char **result)
 	fseek(f, 0, SEEK_END);
 	size = ftell(f);
 	fseek(f, 0, SEEK_SET);
-	*result = new unsigned char[size + 1];
+	*result = (unsigned char*)malloc(sizeof(unsigned char) * (size + 1));
 	
 	int newSize = (int)fread(*result, sizeof(char), size, f);
 	if (size != newSize)
 	{
 		printf("size = %d, newSize = %d\n", size, newSize);
-		delete [] *result;
+		free(*result);
 		return CouldNotReadFile;
 	}
 	fclose(f);
@@ -71,6 +72,6 @@ void* bbq_load(const char* filename)
 void bbq_free(void* ptr)
 {
 	unsigned int* p = (unsigned int*)ptr;
-	unsigned char* base = (unsigned char*)(p - (*(p-1) + 2));  // confused yet?  check out the memory layout.
-	delete [] base;
+	unsigned char* base = (unsigned char*)(p - (*(p-1) + 2));
+	free(base);
 }

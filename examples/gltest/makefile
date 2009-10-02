@@ -10,11 +10,11 @@ LFLAGS = -framework Cocoa -framework OpenGL -framework GLUT -framework SDL -lstd
 OBJ = test.o SDLMain.o
 
 # TODO: fix dependencies
-DEPENDS = test.h
+BBQ_HEADERS = app.h
+DEPENDS = test.h $(BBQ_HEADERS)
 
 test: $(OBJ)
 	$(GCC) $(OBJ) -o test $(LFLAGS)
-
 
 test.o: test.c $(DEPENDS)
 	$(GCC) $(CFLAGS) -c $<
@@ -23,5 +23,8 @@ test.o: test.c $(DEPENDS)
 SDLMain.o : SDLMain.m $(DEPENDS)
 	$(GCC) $(CFLAGS) -c $<
 
+app.h : app.dd
+	bbq-burn $< app.h
+
 clean:
-	rm $(OBJ) test
+	rm $(OBJ) test $(BBQ_HEADERS)

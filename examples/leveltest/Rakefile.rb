@@ -40,8 +40,8 @@ file 'level.h' => ['level.dd'] do
   shell 'bbq-burn -n bbq level.dd level.h'
 end
 
-file 'bbq.o' => ['bbq.h', 'bbq.cpp'] do
-  compile 'bbq.o', 'bbq.cpp'
+file 'bbq.o' => ['bbq.h', 'bbq.c'] do
+  compile 'bbq.o', 'bbq.c'
 end
 
 file 'test.o' => ['bbq.h', 'level.h', 'test.cpp'] do
