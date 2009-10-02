@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <math.h>
-#include "test.h"
 #include <SDL/SDL.h>
 
 #ifdef DARWIN
@@ -12,6 +11,10 @@
 #include <GL/glu.h>
 #include <GL/glut.h>
 #endif
+
+#include "test.h"
+#include "bbq.h"
+#include "app.h"
 
 const unsigned int white = 0xffffffff;
 const unsigned int black = 0;
@@ -41,6 +44,7 @@ static float s_quad_uvs[] = {
 };
 
 static GLuint s_texture;
+static App* s_app;
 
 void RenderInit()
 {
@@ -63,7 +67,8 @@ void RenderInit()
 
 void Render()
 {
-	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+	glClearColor(s_app->clear_color.r, s_app->clear_color.g, 
+				 s_app->clear_color.b, s_app->clear_color.a);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	glBindTexture(GL_TEXTURE_2D, s_texture);
@@ -71,7 +76,9 @@ void Render()
 	float* uvs = s_quad_uvs;
 	float* verts = s_quad_verts;
 
-	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+	glColor4f(s_app->quad_color.r, s_app->quad_color.g, 
+			  s_app->quad_color.b, s_app->quad_color.a);
+
 	glBegin(GL_QUADS);
 
 	for (unsigned int i = 0; i < 4; i++)
@@ -96,7 +103,10 @@ int main(int argc, char* argv[])
 
 	if (!screen)
 		fprintf(stderr, "Couldn't create SDL screen!\n");
-		
+
+	// load app
+	s_app = (App*)bbq_load("app.bin");
+
 	RenderInit();
 
 	bool done = false;
@@ -121,6 +131,9 @@ int main(int argc, char* argv[])
 		if (!done)
 			Render();
 	}
+
+	// free app
+	bbq_free(s_app);
 
 	return 0;
 }
