@@ -10,7 +10,7 @@ spec = Gem::Specification.new do |s|
   s.homepage = 'http://github.com/hyperlogic/bbq'
   s.platform = Gem::Platform::RUBY
   s.required_ruby_version = '>=1.8.7'
-  s.files = Dir['bin/*', 'lib/*', 'src/*', 'README']
+  s.files = Dir['bin/*', 'lib/*', 'lib/bbq/*', 'src/*', 'README']
   s.executables = ['bbq-burn', 'bbq-cook']
   s.has_rdoc = false
 end
