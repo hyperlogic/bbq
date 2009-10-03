@@ -1,6 +1,6 @@
-# Naming instances of BaseType with a capital letter is bad form (example Int32Type, FloatType)
+# TODO
 # using a $type_registry global is bad form.  Should be a class variable or something.
-
+#
 # All types in the $type_registry are expected to accept the following messages.
 #
 # define_single field_name       =>  "int foo;"
@@ -19,132 +19,114 @@
 
 class BaseType
 
-  def initialize type_name, type_alignment
+  def initialize type_name, type_alignment, pack_str
     @type_name = type_name
     @type_alignment = type_alignment
+    @pack_str = pack_str
   end
 
+  # output the c declaration of one element of this type.
   def define_single field_name
     "#{@type_name} #{field_name};"
   end
 
+  # output the c declaration of an embedded array of this type.
   def define_array field_name, len
     "#{@type_name} #{field_name}[#{len}];"
   end
 
+  # output the c declearation of a pointer to this type.
   def define_ptr field_name
     "#{@type_name}* #{field_name};"
   end
 
+  # append the binary representation of a value of this type onto a chunk.
+  # this implementation only works for numeric types
   def cook chunk, value, name
-    puts "#{@type_name} #{value.inspect} #{name}" if DEBUG_COOK
+    comment = "(#{@type_name}) #{name}"
+    # single precision float, little-endian byte order
+    chunk.push([check_num(value, name)].pack(@pack_str), comment)
   end
 
+  # output the alignment requirements for values of this type. (in bytes)
   def alignment
     @type_alignment
   end
-end
 
-Float32Type = BaseType.new "float", 4
-def Float32Type.cook chunk, value, name
-  super
-  comment = "(#{@type_name}) #{name}"
-  # single precision float, little-endian byte order
-  if value.nil?
-    chunk.push([0].pack("e"), comment)
-  else
-    raise "Value must be Numeric #{name}" unless value.is_a?(Numeric)
-    chunk.push([value].pack("e"), comment)
+  # helper function
+  def check_num value, name
+    if value.nil?
+      0
+    else
+      raise "value must be Numeric #{name}" unless value.is_a?(Numeric)
+      value
+    end
   end
 end
 
-BoolType = BaseType.new "bool", 1
-def BoolType.cook chunk, value, name
-  super
-  comment = "(#{@type_name}) #{name}"
-  # 8 bit unsigned int
-  chunk.push([value ? 1 : 0].pack("C"), comment)
-end
-
-Int32Type = BaseType.new "int", 4
-def Int32Type.cook chunk, value, name
-  super
-  comment = "(#{@type_name}) #{name}"
-  # 32 bit signed int, little-endian byte order
-  if value.nil?
-    chunk.push([0].pack("i"), comment)
-  else
-    raise "Value must be Numeric #{name}" unless value.is_a?(Numeric)
-    chunk.push([value].pack("i"), comment)
+# single precision float, little-endian byte order
+class FloatType < BaseType
+  def initialize
+    super "float", 4, "e"
   end
 end
 
-Uint32Type = BaseType.new "unsigned int", 4
-def Uint32Type.cook chunk, value, name
-  super
-  comment = "(#{@type_name}) #{name}"
-  # 32 bit unsigned int, little-endian byte order
-  if value.nil?
-    chunk.push([0].pack("I"), comment)
-  else
-    raise "Value must be Numeric #{name}" unless value.is_a?(Numeric)
-    chunk.push([value].pack("I"), comment)
+# boolean
+class BoolType < BaseType
+  def initialize
+    super "bool", 1, nil
+  end
+
+  def cook chunk, value, name
+    comment = "(#{@type_name}) #{name}"
+    # 8 bit unsigned int
+    chunk.push([value ? 1 : 0].pack("C"), comment)
   end
 end
 
-Uint16Type = BaseType.new "unsigned short", 2
-def Uint16Type.cook chunk, value, name
-  super
-  comment = "(#{@type_name}) #{name}"
-  # 16 bit unsigned int
-  if value.nil?
-    chunk.push([0].pack("S"), comment)
-  else
-    raise "Value must be Numeric #{name}" unless value.is_a?(Numeric)
-    chunk.push([value].pack("S"), comment)
+# 32 bit signed int, little-endian byte order
+class Int32Type < BaseType
+  def initialize
+    super "int", 4, "i"
   end
 end
 
-Int16Type = BaseType.new "short", 2
-def Int16Type.cook chunk, value, name
-  super
-  comment = "(#{@type_name}) #{name}"
-  # 16 bit signed int
-  if value.nil?
-    chunk.push([0].pack("s"), comment)
-  else
-    raise "Value must be Numeric #{name}" unless value.is_a?(Numeric)
-    chunk.push([value].pack("s"), comment)
+# 32 bit unsigned int, little-endian byte order# 
+class Uint32Type < BaseType
+  def initialize
+    super "unsigned int", 4, "I"
   end
 end
 
-Uint8Type = BaseType.new "unsigned char", 1
-def Uint8Type.cook chunk, value, name
-  super
-  comment = "(#{@type_name}) #{name}"
-  # 8 bit unsigned int
-  if value.nil?
-    chunk.push([0].pack("C"), comment)
-  else
-    raise "Value must be Numeric #{name}" unless value.is_a?(Numeric)
-    chunk.push([value].pack("C"), comment)
+# 16 bit unsigned int
+class Uint16Type < BaseType
+  def initialize
+    super "unsigned short", 2, "S"
   end
 end
 
-Int8Type = BaseType.new "char", 1
-def Int8Type.cook chunk, value, name
-  super
-  comment = "(#{@type_name}) #{name}"
-  # 8 bit signed int
-  if value.nil?
-    chunk.push([0].pack("c"), comment)
-  else
-    raise "Value must be Numeric #{name}" unless value.is_a?(Numeric)
-    chunk.push([value].pack("c"), comment)
+# 16 bit signed int
+class Int16Type < BaseType
+  def initialize
+    super "short", 2, "s"
   end
 end
 
-$type_registry = {:int32 => Int32Type, :uint32 => Uint32Type, 
-                  :int16 => Int16Type, :uint16 => Uint16Type, 
-                  :int8 => Int8Type, :uint8 => Uint8Type, 
-                  :float => Float32Type, :bool => BoolType }
+# 8 bit unsigned int
+class Uint8Type < BaseType
+  def initialize
+    super "unsigned char", 1, "C"
+  end
+end
+
+# 8 bit signed int
+class Int8Type < BaseType
+  def initialize
+    super "char", 1, "c"
+  end
+end
+
+$type_registry = {:int32 => Int32Type.new, :uint32 => Uint32Type.new, 
+                  :int16 => Int16Type.new, :uint16 => Uint16Type.new, 
+                  :int8 => Int8Type.new, :uint8 => Uint8Type.new, 
+                  :float => FloatType.new, :bool => BoolType.new }

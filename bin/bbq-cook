@@ -51,6 +51,7 @@ if BBQ.data_root.nil?
   raise "Missing BBQ.data in #{di_file}"
 end
 
+# TODO: this should be somewhere else
 # see bbq.cpp for pointer table memory layout
 class PointerTable
   def initialize
@@ -63,11 +64,12 @@ class PointerTable
 
   def build_chunk
     @chunk = Chunk.new
-    Uint32Type.cook @chunk, @ptrs.size, "pointer table size"
+    uint32 = $type_registry[:uint32]
+    uint32.cook @chunk, @ptrs.size, "pointer table size"
     @ptrs.each do |ptr|
-      Uint32Type.cook @chunk, ptr, "pointer"
+      uint32.cook @chunk, ptr, "pointer"
     end
-    Uint32Type.cook @chunk, @ptrs.size, "pointer table size"  # output num_pointers again
+    uint32.cook @chunk, @ptrs.size, "pointer table size"  # output num_pointers again
   end
 
   def chunk

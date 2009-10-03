@@ -107,8 +107,6 @@ class CStruct < BaseType
   end
 
   def cook chunk, value, name
-    super
-
     # sort values of members hash by index
     sorted_fields = @fields.values.sort_by{|f| f.index}
 
@@ -140,7 +138,7 @@ class CStruct < BaseType
           # add a pointer
           chunk.add_pointer dest_chunk
           # add the size
-          Uint32Type.cook chunk, array.size, debug_name + "_size"
+          $type_registry[:uint32].cook chunk, array.size, debug_name + "_size"
         when StringField
           # cook string
           dest_chunk = Chunk.new
@@ -187,9 +185,9 @@ class CStruct < BaseType
         when ArrayField
           '    ' + type.define_array(field.field_name, field.num_items)
         when VarArrayField
-          '    ' + type.define_ptr(field.field_name) + " " + Uint32Type.define_single("#{field.field_name}_size")
+          '    ' + type.define_ptr(field.field_name) + " " + $type_registry[:uint32].define_single("#{field.field_name}_size")
         when StringField
-          '    ' + Int8Type.define_ptr(field.field_name)
+          '    ' + $type_registry[:uint8].define_ptr(field.field_name)
         when PointerField
           '    ' + type.define_ptr(field.field_name)
         else

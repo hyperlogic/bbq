@@ -15,3 +15,19 @@ spec = Gem::Specification.new do |s|
   s.has_rdoc = false
 end
 Rake::GemPackageTask.new(spec).define
+
+def shell cmd
+  puts cmd
+  result = `#{cmd} 2>&1`
+  result.each {|line| print line}
+end
+
+desc "rebuild gem and install"
+task :install => :repackage do
+  installed_gems = `gem list`
+  if installed_gems =~ /bbq/
+    shell 'sudo gem uninstall bbq -x'
+  end
+  shell "sudo gem install #{Dir["pkg/*"][0]}"
+end
+
