@@ -8,14 +8,20 @@ module BBQ
 
     # method_messing hook
     Object.send(:define_method, :method_missing) do |sym, *args, &block|
-      BBQ.header_method_missing sym, *args, &block
+      if sym == :struct
+        CStruct.new *args, &block
+      elsif args.size == 0
+        sym
+      else
+        super
+      end
     end
 
     # const_missing hook
     meta = class << Object; self; end
     meta.send(:alias_method, :old_const_missing, :const_missing)
     meta.send(:define_method, :const_missing) do |sym|
-      BBQ.header_const_missing sym
+      sym
     end
   end
 
@@ -24,22 +30,6 @@ module BBQ
     Object.send(:undef_method, :method_missing)
     meta = class << Object; self; end
     meta.send(:alias_method, :const_missing, :old_const_missing)
-  end
-
-  def BBQ.header_method_missing sym, *args, &block
-    # TODO: REMOVE FOR DEBUGGING ONLY
-    puts "mm #{sym}"
-    if sym == :struct
-      CStruct.new *args, &block
-    elsif args.size == 0
-      sym
-    else
-      super
-    end
-  end  
-
-  def BBQ.header_const_missing sym
-    sym
   end
 
   def BBQ.header &block

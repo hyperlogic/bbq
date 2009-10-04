@@ -1,8 +1,7 @@
 # gltest app data
 
-require 'texture_resource.rb'
-
 BBQ.header do
+
   struct Color do
     float r, 0.0
     float g, 0.0

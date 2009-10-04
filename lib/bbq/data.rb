@@ -6,7 +6,12 @@ module BBQ
     meta = class << Object; self; end
     meta.send(:alias_method, :old_const_missing, :const_missing)
     meta.send(:define_method, :const_missing) do |sym|
-      BBQ.data_const_missing sym
+      type = $type_registry[sym]
+      if type
+        type.new
+      else
+        super
+      end
     end
   end
 
@@ -14,15 +19,6 @@ module BBQ
   def BBQ.remove_data_hooks
     meta = class << Object; self; end
     meta.send(:alias_method, :const_missing, :old_const_missing)
-  end
-
-  def BBQ.data_const_missing sym
-    type = $type_registry[sym]
-    if type
-      type.new
-    else
-      super
-    end
   end
 
   def BBQ.data &block
