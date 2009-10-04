@@ -46,7 +46,7 @@ class OpenGLTextureType < BaseType
   end
 
   def initialize
-    super "OpenGLTexture", 4, nil
+    super "struct OpenGLTexture", 4, nil
   end
   
   def cook chunk, value, name

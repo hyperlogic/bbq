@@ -16,17 +16,17 @@
 #include "bbq.h"
 #include "app.h"
 
-const unsigned int white = 0xffffffff;
-const unsigned int black = 0;
+#define WHITE 0xffffffff
+#define BLACK 0x0
 static unsigned int s_texture_data[] = { 
-	white, white, white, white, black, black, black, black,
-	white, white, white, white, black, black, black, black,
-	white, white, white, white, black, black, black, black,
-	white, white, white, white, black, black, black, black,
-	black, black, black, black, white, white, white, white, 
-	black, black, black, black, white, white, white, white, 
-	black, black, black, black, white, white, white, white, 
-	black, black, black, black, white, white, white, white 
+	WHITE, WHITE, WHITE, WHITE, BLACK, BLACK, BLACK, BLACK,
+	WHITE, WHITE, WHITE, WHITE, BLACK, BLACK, BLACK, BLACK,
+	WHITE, WHITE, WHITE, WHITE, BLACK, BLACK, BLACK, BLACK,
+	WHITE, WHITE, WHITE, WHITE, BLACK, BLACK, BLACK, BLACK,
+	BLACK, BLACK, BLACK, BLACK, WHITE, WHITE, WHITE, WHITE, 
+	BLACK, BLACK, BLACK, BLACK, WHITE, WHITE, WHITE, WHITE, 
+	BLACK, BLACK, BLACK, BLACK, WHITE, WHITE, WHITE, WHITE, 
+	BLACK, BLACK, BLACK, BLACK, WHITE, WHITE, WHITE, WHITE 
 };
 
 static float s_quad_verts[] = {
@@ -44,9 +44,9 @@ static float s_quad_uvs[] = {
 };
 
 static GLuint s_texture;
-static App* s_app;
+static struct App* s_app;
 
-void RenderInit()
+void render_init()
 {
 	// set up projection matrix
 	glMatrixMode(GL_PROJECTION);
@@ -86,7 +86,7 @@ void RenderInit()
 		   s_app->quad_color.b, s_app->quad_color.a);
 }
 
-void Render()
+void render()
 {
 	glClearColor(s_app->clear_color.r, s_app->clear_color.g, 
 				 s_app->clear_color.b, s_app->clear_color.a);
@@ -102,7 +102,8 @@ void Render()
 
 	glBegin(GL_QUADS);
 
-	for (unsigned int i = 0; i < 4; i++)
+	unsigned int i;
+	for (i = 0; i < 4; i++)
 	{
 		glMultiTexCoord2fv(0, uvs); uvs += 2;
 		glVertex3fv(verts); verts += 3;
@@ -126,11 +127,11 @@ int main(int argc, char* argv[])
 		fprintf(stderr, "Couldn't create SDL screen!\n");
 
 	// load app
-	s_app = (App*)bbq_load("app.bin");
+	s_app = (struct App*)bbq_load("app.bin");
 
-	RenderInit();
+	render_init();
 
-	bool done = false;
+	unsigned char done = 0;
 	while (!done)
 	{
 		SDL_Event event;
@@ -139,7 +140,7 @@ int main(int argc, char* argv[])
 			switch (event.type)
 			{
 				case SDL_QUIT:
-					done = true;
+					done = 1;
 					break;
 
 				case SDL_VIDEORESIZE:
@@ -150,7 +151,7 @@ int main(int argc, char* argv[])
 		}
 
 		if (!done)
-			Render();
+			render();
 	}
 
 	// free app

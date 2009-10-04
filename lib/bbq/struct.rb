@@ -25,6 +25,21 @@ class CStruct < BaseType
     $type_registry[@type_name] = self
   end
 
+  def define_single field_name
+    "struct #{@type_name} #{field_name};"
+  end
+
+  # output the c declaration of an embedded array of this type.
+  def define_array field_name, len
+    "struct #{@type_name} #{field_name}[#{len}];"
+  end
+
+  # output the c declearation of a pointer to this type.
+  def define_ptr field_name
+    "struct #{@type_name}* #{field_name};"
+  end
+
+
   def new hash = nil
     # generate a new OpenStruct instance
 

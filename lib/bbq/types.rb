@@ -74,7 +74,7 @@ end
 # boolean
 class BoolType < BaseType
   def initialize
-    super "bool", 1, nil
+    super "unsigned char", 1, nil
   end
 
   def cook chunk, value, name
