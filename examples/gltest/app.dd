@@ -13,6 +13,7 @@ BBQ.header do
   struct App do
     Color clear_color
     Color quad_color
+    OpenGLTexture background
   end
 end
     

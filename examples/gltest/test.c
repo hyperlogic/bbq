@@ -62,7 +62,17 @@ void RenderInit()
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-	glTexImage2D(GL_TEXTURE_2D, 0, 4, 8, 8, 0, GL_RGBA, GL_UNSIGNED_BYTE, s_texture_data);
+//	glTexImage2D(GL_TEXTURE_2D, 0, 4, 8, 8, 0, GL_RGBA, GL_UNSIGNED_BYTE, s_texture_data);
+	glTexImage2D(GL_TEXTURE_2D, 
+				 0, 
+				 s_app->background.internal_format, 
+				 s_app->background.width, 
+				 s_app->background.height, 
+				 0, 
+				 s_app->background.format, 
+				 s_app->background.type, 
+				 s_app->background.pixels);
+	
 }
 
 void Render()

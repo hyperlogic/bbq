@@ -7,5 +7,6 @@ BBQ.data do
   white = Color.build(:r => 1, :g => 1, :b => 1, :a => 1)
 
   App.build(:clear_color => dark_gray,
-            :quad_color => white)
+            :quad_color => white,
+            :background => {:filename => 'logo.png'})
 end

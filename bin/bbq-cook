@@ -105,7 +105,7 @@ def pretty_print_chunk chunk, offset
   chunk.str.size.times do |i|
     if i % 8 == 0
       first = true
-      while comments[0][0] < i
+      while comments && comments[0] && comments[0][0] < i
         c = comments.shift
         if first
           puts "    ; %04x : %s" % [c[0] + offset, c[1]]

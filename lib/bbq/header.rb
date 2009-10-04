@@ -27,6 +27,8 @@ module BBQ
   end
 
   def BBQ.header_method_missing sym, *args, &block
+    # TODO: REMOVE FOR DEBUGGING ONLY
+    puts "mm #{sym}"
     if sym == :struct
       CStruct.new *args, &block
     elsif args.size == 0

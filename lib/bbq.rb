@@ -18,6 +18,7 @@ require 'bbq/data'
 require 'bbq/chunk'
 require 'bbq/types'
 require 'bbq/struct'
+require 'bbq/texture_type'
 
 
 
