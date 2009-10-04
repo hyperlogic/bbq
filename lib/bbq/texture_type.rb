@@ -22,7 +22,7 @@ class OpenGLTextureType < BaseType
       puts "#{@filename} is #{@width} x #{@height}"
 
       # stream the raw image data into a temp file
-      `stream -map rgb -storage-type char #{@filename} pixels.dat`
+      `stream -map #{@has_alpha ? "rgba" : "rgb"} -storage-type char #{@filename} pixels.dat`
 
       # read the file into @pixels
       File.open('pixels.dat', 'rb') do |f|
@@ -33,8 +33,9 @@ class OpenGLTextureType < BaseType
       FileUtils.rm 'pixels.dat'
 
       # set format fields
-      @internal_format = GL_RGB
-      @format = GL_RGB
+      format = @has_alpha ? GL_RGBA : GL_RGB
+      @internal_format = format
+      @format = format
       @type = GL_UNSIGNED_BYTE
     end
   end

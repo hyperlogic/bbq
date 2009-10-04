@@ -53,6 +53,9 @@ void RenderInit()
 	glOrtho(1.0, -1.0, -1.0, 1.0, 1.0, -1.0);
 	glMatrixMode(GL_MODELVIEW);
 
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
 	// setup the static texture
 	glEnable(GL_TEXTURE_2D);
 	glGenTextures(1, &s_texture);
@@ -72,7 +75,14 @@ void RenderInit()
 				 s_app->background.format, 
 				 s_app->background.type, 
 				 s_app->background.pixels);
-	
+
+	printf("clear color = %.3f, %.3f, %.3f, %.3f\n", 
+		   s_app->clear_color.r, s_app->clear_color.g, 
+		   s_app->clear_color.b, s_app->clear_color.a);
+
+	printf("quad color = %.3f, %.3f, %.3f, %.3f\n", 
+		   s_app->quad_color.r, s_app->quad_color.g, 
+		   s_app->quad_color.b, s_app->quad_color.a);
 }
 
 void Render()
