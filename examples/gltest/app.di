@@ -8,5 +8,5 @@ BBQ.data do
 
   App.build(:clear_color => red,
             :quad_color => white,
-            :background => {:filename => '5-gon.png', :has_alpha => true})
+            :background => {:filename => 'logo.png', :has_alpha => false})
 end

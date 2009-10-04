@@ -21,16 +21,21 @@ class OpenGLTextureType < BaseType
       @width, @height = str.split.map {|s| s.to_i}
       puts "#{@filename} is #{@width} x #{@height}"
 
+      # flip the scan lines of the image
+      temp_image = "temp.#{File.extname(@filename)}"
+      `convert -flip #{@filename} #{temp_image}`
+
       # stream the raw image data into a temp file
-      `stream -map #{@has_alpha ? "rgba" : "rgb"} -storage-type char #{@filename} pixels.dat`
+      `stream -map #{@has_alpha ? "rgba" : "rgb"} -storage-type char #{temp_image} pixels.dat`
 
       # read the file into @pixels
       File.open('pixels.dat', 'rb') do |f|
         @pixels = f.read
       end
 
-      # remove the temp file
+      # remove the temp files
       FileUtils.rm 'pixels.dat'
+      FileUtils.rm temp_image
 
       # set format fields
       format = @has_alpha ? GL_RGBA : GL_RGB

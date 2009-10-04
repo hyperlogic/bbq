@@ -52,6 +52,7 @@ void RenderInit()
 	glMatrixMode(GL_PROJECTION);
 	glOrtho(1.0, -1.0, -1.0, 1.0, 1.0, -1.0);
 	glMatrixMode(GL_MODELVIEW);
+	glRotatef(180.0f, 0.0f, 1.0f, 0.0f);
 
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
