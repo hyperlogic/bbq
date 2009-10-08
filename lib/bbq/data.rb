@@ -6,7 +6,7 @@ module BBQ
     meta = class << Object; self; end
     meta.send(:alias_method, :old_const_missing, :const_missing)
     meta.send(:define_method, :const_missing) do |sym|
-      type = $type_registry[sym]
+      type = TypeRegistry.lookup_type(sym)
       if type
         type.new
       else

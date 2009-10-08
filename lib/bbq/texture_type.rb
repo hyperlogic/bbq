@@ -55,15 +55,17 @@ class OpenGLTextureType < BaseType
     texture = Texture.new value
 
     # cook the texture data
-    $type_registry[:uint32].cook(chunk, texture.width, "#{name}.width")
-    $type_registry[:uint32].cook(chunk, texture.height, "#{name}.height")
-    $type_registry[:int32].cook(chunk, texture.internal_format, "#{name}.internal_format")
-    $type_registry[:int32].cook(chunk, texture.format, "#{name}.format")
-    $type_registry[:int32].cook(chunk, texture.type, "#{name}.type")
+    uint32 = TypeRegistry.lookup_type(:uint32)
+    uint32.cook(chunk, texture.width, "#{name}.width")
+    uint32.cook(chunk, texture.height, "#{name}.height")
+    int32 = TypeRegistry.lookup_type(:int32)
+    int32.cook(chunk, texture.internal_format, "#{name}.internal_format")
+    int32.cook(chunk, texture.format, "#{name}.format")
+    int32.cook(chunk, texture.type, "#{name}.type")
     image_chunk = Chunk.new
     image_chunk.push(texture.pixels, "#{name} pixels")
     chunk.add_pointer image_chunk
   end
 
 end
-$type_registry[:OpenGLTexture] = OpenGLTextureType.new
+TypeRegistry.register(:OpenGLTexture, OpenGLTextureType.new, __FILE__)

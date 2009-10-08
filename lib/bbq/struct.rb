@@ -17,12 +17,15 @@ class CStruct < BaseType
     @fields = {}
     instance_eval &block
 
-    # index is used to ensure that structs get defined in the same order in ruby & the generated header
+    # index is used to preserve ordering
     @index = @@count
     @@count += 1
 
-    # keep track of all structs defined
-    $type_registry[@type_name] = self
+    # HACK: this might not work all the time....
+    file = File.basename(caller[2].split(':')[0])
+
+    # keep track of all structs and which file they were defined in
+    TypeRegistry.register(@type_name, self, file)
   end
 
   def define_single field_name
@@ -69,8 +72,7 @@ class CStruct < BaseType
   # adds a new fixed size array into struct.
   # memory is embeded into struct. i.e. fixed_array int, my_nums, 3  => int my_nums[3];
   def fixed_array type_name, field_name, num_items, default_value = nil
-    # lookup this type in registry
-    type = $type_registry[type_name]
+    type = TypeRegistry.lookup_type(type_name)
     if type
       @fields[field_name] = ArrayField.new(@fields.size, type_name, field_name, num_items, default_value)
     else
@@ -81,8 +83,7 @@ class CStruct < BaseType
   # adds a variable length array into struct, and its associated size feild.
   # memory is outside of struct & pointed to by field i.e. var_array int, my_nums  => int* my_nums;
   def var_array type_name, field_name, default_value = nil
-    # lookup this type in registry
-    type = $type_registry[type_name]
+    type = TypeRegistry.lookup_type(type_name)
     if type
       @fields[field_name] = VarArrayField.new(@fields.size, type_name, field_name, default_value)
     else
@@ -97,7 +98,7 @@ class CStruct < BaseType
 
   # adds a pointer to a chunk of memory.  Useful for embedding raw bytes.
   def pointer type_name, field_name, default_value = nil
-    type = $type_registry[type_name]
+    type = TypeRegistry.lookup_type(type_name)
     if type
       @fields[field_name] = PointerField.new(@fields.size, type_name, field_name, default_value)
     else
@@ -107,7 +108,7 @@ class CStruct < BaseType
 
   def method_missing symbol, *args
     # lookup this type in registry
-    type = $type_registry[symbol]
+    type = TypeRegistry.lookup_type(symbol)
     if type
       if args.size > 0
         field_name = args[0]
@@ -126,7 +127,7 @@ class CStruct < BaseType
     sorted_fields = @fields.values.sort_by{|f| f.index}
 
     sorted_fields.each do |field|
-      type = $type_registry[field.type_name]
+      type = TypeRegistry.lookup_type(field.type_name)
       debug_name = name.to_s + "." + field.field_name.to_s
       if type
         case field
@@ -153,7 +154,7 @@ class CStruct < BaseType
           # add a pointer
           chunk.add_pointer dest_chunk
           # add the size
-          $type_registry[:uint32].cook chunk, array.size, debug_name + "_size"
+          TypeRegistry.lookup_type(:uint32).cook chunk, array.size, debug_name + "_size"
         when StringField
           # cook string
           dest_chunk = Chunk.new
@@ -192,7 +193,7 @@ class CStruct < BaseType
 
     # define each field
     lines += sorted_fields.map do |field|
-      type = $type_registry[field.type_name]
+      type = TypeRegistry.lookup_type(field.type_name)
       if type
         case field
         when SingleField
@@ -200,9 +201,10 @@ class CStruct < BaseType
         when ArrayField
           '    ' + type.define_array(field.field_name, field.num_items)
         when VarArrayField
-          '    ' + type.define_ptr(field.field_name) + " " + $type_registry[:uint32].define_single("#{field.field_name}_size")
+          '    ' + type.define_ptr(field.field_name) + " " + 
+            TypeRegistry.lookup_type(:uint32).define_single("#{field.field_name}_size")
         when StringField
-          '    ' + $type_registry[:uint8].define_ptr(field.field_name)
+          '    ' + TypeRegistry.lookup_type(:uint8).define_ptr(field.field_name)
         when PointerField
           '    ' + type.define_ptr(field.field_name)
         else
@@ -223,7 +225,7 @@ class CStruct < BaseType
   def alignment
     # The alignment of the first field.
     field = @fields.values.first{|i| a.index == 0}
-    type = $type_registry[field.type_name]
+    type = TypeRegistry.lookup_type(field.type_name)
     type.alignment
   end
 

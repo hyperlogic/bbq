@@ -1,7 +1,6 @@
-# TODO
-# using a $type_registry global is bad form.  Should be a class variable or something.
 #
-# All types in the $type_registry are expected to accept the following messages.
+# All types need to be registerd using TypeRegistry.register
+# All types are expected to accept the following messages.
 #
 # define_single field_name       =>  "int foo;"
 # define_array field_name, len   =>  "int foo[10];"
@@ -16,6 +15,36 @@
 #                                      int32* field2;
 #                                      int32 feild3[10];
 #                                   };"
+
+module TypeRegistry
+  @@hash = {}
+
+  # register a new type
+  def self.register(sym, instance, file)
+    raise "Type #{sym} is already registered!" if @@hash[sym]
+    @@hash[sym] = [instance, file]
+  end
+
+  # look up a type from a symbol
+  def self.lookup_type(sym)
+    result = @@hash[sym]
+    if result 
+      result[0] 
+    else 
+      nil 
+    end
+  end
+
+  # look up which file a type was registered from
+  def self.lookup_file(sym)
+    result = @@hash[sym]
+    if result 
+      result[1]
+    else 
+      nil 
+    end
+  end
+end
 
 class BaseType
 
@@ -70,6 +99,7 @@ class FloatType < BaseType
     super "float", 4, "e"
   end
 end
+TypeRegistry.register(:float, FloatType.new, __FILE__)
 
 # boolean
 class BoolType < BaseType
@@ -83,13 +113,8 @@ class BoolType < BaseType
     chunk.push([value ? 1 : 0].pack("C"), comment)
   end
 end
+TypeRegistry.register(:bool, BoolType.new, __FILE__)
 
-# 32 bit signed int, little-endian byte order
-class Int32Type < BaseType
-  def initialize
-    super "int", 4, "i"
-  end
-end
 
 # 32 bit unsigned int, little-endian byte order# 
 class Uint32Type < BaseType
@@ -97,6 +122,15 @@ class Uint32Type < BaseType
     super "unsigned int", 4, "I"
   end
 end
+TypeRegistry.register(:uint32, Uint32Type.new, __FILE__)
+
+# 32 bit signed int, little-endian byte order
+class Int32Type < BaseType
+  def initialize
+    super "int", 4, "i"
+  end
+end
+TypeRegistry.register(:int32, Int32Type.new, __FILE__)
 
 # 16 bit unsigned int
 class Uint16Type < BaseType
@@ -104,6 +138,7 @@ class Uint16Type < BaseType
     super "unsigned short", 2, "S"
   end
 end
+TypeRegistry.register(:uint16, Uint16Type.new, __FILE__)
 
 # 16 bit signed int
 class Int16Type < BaseType
@@ -111,6 +146,7 @@ class Int16Type < BaseType
     super "short", 2, "s"
   end
 end
+TypeRegistry.register(:int16, Int16Type.new, __FILE__)
 
 # 8 bit unsigned int
 class Uint8Type < BaseType
@@ -118,6 +154,7 @@ class Uint8Type < BaseType
     super "unsigned char", 1, "C"
   end
 end
+TypeRegistry.register(:uint8, Uint8Type.new, __FILE__)
 
 # 8 bit signed int
 class Int8Type < BaseType
@@ -125,8 +162,4 @@ class Int8Type < BaseType
     super "char", 1, "c"
   end
 end
-
-$type_registry = {:int32 => Int32Type.new, :uint32 => Uint32Type.new, 
-                  :int16 => Int16Type.new, :uint16 => Uint16Type.new, 
-                  :int8 => Int8Type.new, :uint8 => Uint8Type.new, 
-                  :float => FloatType.new, :bool => BoolType.new }
+TypeRegistry.register(:int8, Int8Type.new, __FILE__)

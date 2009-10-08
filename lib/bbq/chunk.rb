@@ -39,8 +39,8 @@ class Chunk
     end
 
     # write out a null pointer, it will be fixed up later in resolve_pointers.
-    align $type_registry[:uint32].alignment
-    $type_registry[:uint32].cook self, 0, "pointer"
+    align TypeRegistry.lookup_type(:uint32).alignment
+    TypeRegistry.lookup_type(:uint32).cook self, 0, "pointer"
   end
 
   def resolve_pointers
@@ -58,7 +58,7 @@ class Chunk
       # this offset is the number of bytes from the pointer's location to the destination.
       temp = Chunk.new
       offset = @str.size - ptr.src_offset
-      $type_registry[:uint32].cook temp, offset, "offset"
+      TypeRegistry.lookup_type(:uint32).cook(temp, offset, "offset")
 
       # overrite the pointer value in the @str
       @str[ptr.src_offset, temp.size] = temp.str

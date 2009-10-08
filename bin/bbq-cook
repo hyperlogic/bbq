@@ -64,7 +64,7 @@ class PointerTable
 
   def build_chunk
     @chunk = Chunk.new
-    uint32 = $type_registry[:uint32]
+    uint32 = TypeRegistry.lookup_type(:uint32)
     uint32.cook @chunk, @ptrs.size, "pointer table size"
     @ptrs.each do |ptr|
       uint32.cook @chunk, ptr, "pointer"
@@ -80,7 +80,7 @@ end
 
 root = BBQ.data_root
 chunk = Chunk.new
-$type_registry[root.type_name].cook(chunk, root, "root")
+TypeRegistry.lookup_type(root.type_name).cook(chunk, root, "root")
 chunk.resolve_pointers
 
 # fill up the pointer table
