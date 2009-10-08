@@ -44,6 +44,15 @@ module TypeRegistry
       nil 
     end
   end
+
+  def self.each_type_from(filename)
+    @@hash.each do |key, value|
+      if value[1] == filename
+        yield value[0]
+      end
+    end
+  end
+    
 end
 
 class BaseType
