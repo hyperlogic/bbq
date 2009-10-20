@@ -10,6 +10,8 @@ class OpenGLTextureType < BaseType
   class Texture
     attr_reader :width, :height, :internal_format, :format, :type, :pixels
 
+    # hash can have the following keys: 
+    # :filename, :has_alpha
     def initialize hash
       hash.each do |key, value|
         instance_variable_set("@#{key}".to_sym, value)

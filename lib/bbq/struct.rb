@@ -160,7 +160,7 @@ class CStruct < BaseType
           dest_chunk = Chunk.new
           string = value.send(field.field_name)
           if string.is_a? String
-            dest_chunk.push(string + "\0", "string", debug_name)
+            dest_chunk.push(string + "\0", debug_name)
           else
             raise "#{field.field_name} must be a String not a #{string.class}"
           end
