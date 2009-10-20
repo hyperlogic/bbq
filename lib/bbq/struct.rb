@@ -93,7 +93,7 @@ class CStruct < BaseType
 
   # adds string, which will become a field of type char*.
   def string field_name, default_value = nil
-    @fields[field_name] = StringField.new(@fields.size, :uint8, field_name, default_value)
+    @fields[field_name] = StringField.new(@fields.size, :int8, field_name, default_value)
   end
 
   # adds a pointer to a chunk of memory.  Useful for embedding raw bytes.
@@ -204,7 +204,7 @@ class CStruct < BaseType
           '    ' + type.define_ptr(field.field_name) + " " + 
             TypeRegistry.lookup_type(:uint32).define_single("#{field.field_name}_size")
         when StringField
-          '    ' + TypeRegistry.lookup_type(:uint8).define_ptr(field.field_name)
+          '    ' + TypeRegistry.lookup_type(:int8).define_ptr(field.field_name)
         when PointerField
           '    ' + type.define_ptr(field.field_name)
         else
