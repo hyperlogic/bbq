@@ -8,7 +8,6 @@ class CStruct < BaseType
   ArrayField = Struct.new :index, :type_name, :field_name, :num_items, :default_value
   VarArrayField = Struct.new :index, :type_name, :field_name, :default_value
   PointerField = Struct.new :index, :type_name, :field_name, :default_value
-  StringField = Struct.new :index, :type_name, :field_name, :default_value
 
   @@count = 0
 
@@ -91,11 +90,6 @@ class CStruct < BaseType
     end
   end
 
-  # adds string, which will become a field of type char*.
-  def string field_name, default_value = nil
-    @fields[field_name] = StringField.new(@fields.size, :int8, field_name, default_value)
-  end
-
   # adds a pointer to a chunk of memory.  Useful for embedding raw bytes.
   def pointer type_name, field_name, default_value = nil
     type = TypeRegistry.lookup_type(type_name)
@@ -155,17 +149,6 @@ class CStruct < BaseType
           chunk.add_pointer dest_chunk
           # add the size
           TypeRegistry.lookup_type(:uint32).cook chunk, array.size, debug_name + "_size"
-        when StringField
-          # cook string
-          dest_chunk = Chunk.new
-          string = value.send(field.field_name)
-          if string.is_a? String
-            dest_chunk.push(string + "\0", debug_name)
-          else
-            raise "#{field.field_name} must be a String not a #{string.class}"
-          end
-          # add a pointer
-          chunk.add_pointer dest_chunk
         when PointerField
           if value
             dest_chunk = Chunk.new
@@ -203,8 +186,6 @@ class CStruct < BaseType
         when VarArrayField
           '    ' + type.define_ptr(field.field_name) + " " + 
             TypeRegistry.lookup_type(:uint32).define_single("#{field.field_name}_size")
-        when StringField
-          '    ' + TypeRegistry.lookup_type(:int8).define_ptr(field.field_name)
         when PointerField
           '    ' + type.define_ptr(field.field_name)
         else

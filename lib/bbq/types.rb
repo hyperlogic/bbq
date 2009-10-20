@@ -82,7 +82,6 @@ class BaseType
   # this implementation only works for numeric types
   def cook chunk, value, name
     comment = "(#{@type_name}) #{name}"
-    # single precision float, little-endian byte order
     chunk.push([check_num(value, name)].pack(@pack_str), comment)
   end
 
@@ -172,3 +171,18 @@ class Int8Type < BaseType
   end
 end
 TypeRegistry.register(:int8, Int8Type.new, __FILE__)
+
+# null terminated string
+class StringType < BaseType
+  def initialize
+    super "char*", 4, nil
+  end
+
+  def cook chunk, value, name
+    comment = "(#{@type_name}) #{name}"
+    str_chunk = Chunk.new
+    str_chunk.push(value + "\0", "#{name} string")
+    chunk.add_pointer str_chunk
+  end
+end
+TypeRegistry.register(:string, StringType.new, __FILE__)
