@@ -27,11 +27,11 @@ class OpenGLTextureType < BaseType
       w = @width
       h = @height
       i = 0
-      while [w, h].min >= 2
+      while [w, h].min >= 1
 
         # flip the scan lines of the image
         temp_image = "temp.#{File.extname(@filename)}"
-        `convert -flip -size #{w}x#{h} #{@filename} #{temp_image}`
+        `convert -flip -scale #{w}x#{h} #{@filename} #{temp_image}`
 
         # stream the raw image data into a temp file
         `stream -map #{@has_alpha ? "rgba" : "rgb"} -storage-type char #{temp_image} pixels.dat`

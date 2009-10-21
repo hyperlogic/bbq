@@ -61,21 +61,25 @@ void render_init()
 	glEnable(GL_TEXTURE_2D);
 	glGenTextures(1, &s_texture);
 	glBindTexture(GL_TEXTURE_2D, s_texture);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 //	glTexImage2D(GL_TEXTURE_2D, 0, 4, 8, 8, 0, GL_RGBA, GL_UNSIGNED_BYTE, s_texture_data);
-	glTexImage2D(GL_TEXTURE_2D, 
-				 0, 
-				 s_app->background.internal_format, 
-				 s_app->background.width, 
-				 s_app->background.height, 
-				 0, 
-				 s_app->background.format, 
-				 s_app->background.type, 
-				 s_app->background.pixels[0]);
+	int i;
+	for (i = 0; i < s_app->background.num_mips; i++)
+	{
+		glTexImage2D(GL_TEXTURE_2D, 
+					 i, 
+					 s_app->background.internal_format, 
+					 s_app->background.width >> i, 
+					 s_app->background.height >> i, 
+					 0, 
+					 s_app->background.format, 
+					 s_app->background.type, 
+					 s_app->background.pixels[i]);
+	}
 
 	printf("clear color = %.3f, %.3f, %.3f, %.3f\n", 
 		   s_app->clear_color.r, s_app->clear_color.g, 
