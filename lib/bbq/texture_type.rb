@@ -45,7 +45,7 @@ class OpenGLTextureType < BaseType
         FileUtils.rm 'pixels.dat'
         FileUtils.rm temp_image
 
-        puts "    lod #{@i} is #{w} x #{h}"
+        puts "    lod #{i} is #{w} x #{h}"
         
         w /= 2
         h /= 2
