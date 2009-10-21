@@ -23,21 +23,35 @@ class OpenGLTextureType < BaseType
       @width, @height = str.split.map {|s| s.to_i}
       puts "#{@filename} is #{@width} x #{@height}"
 
-      # flip the scan lines of the image
-      temp_image = "temp.#{File.extname(@filename)}"
-      `convert -flip #{@filename} #{temp_image}`
+      @pixels = []
+      w = @width
+      h = @height
+      i = 0
+      while [w, h].min >= 2
 
-      # stream the raw image data into a temp file
-      `stream -map #{@has_alpha ? "rgba" : "rgb"} -storage-type char #{temp_image} pixels.dat`
+        # flip the scan lines of the image
+        temp_image = "temp.#{File.extname(@filename)}"
+        `convert -flip -size #{w}x#{h} #{@filename} #{temp_image}`
 
-      # read the file into @pixels
-      File.open('pixels.dat', 'rb') do |f|
-        @pixels = f.read
+        # stream the raw image data into a temp file
+        `stream -map #{@has_alpha ? "rgba" : "rgb"} -storage-type char #{temp_image} pixels.dat`
+
+        # read the file into @pixels
+        File.open('pixels.dat', 'rb') do |f|
+          @pixels[i] = f.read
+        end
+
+        # remove the temp files
+        FileUtils.rm 'pixels.dat'
+        FileUtils.rm temp_image
+
+        puts "    lod #{@i} is #{w} x #{h}"
+        
+        w /= 2
+        h /= 2
+        i += 1
       end
 
-      # remove the temp files
-      FileUtils.rm 'pixels.dat'
-      FileUtils.rm temp_image
 
       # set format fields
       format = @has_alpha ? GL_RGBA : GL_RGB
@@ -64,9 +78,15 @@ class OpenGLTextureType < BaseType
     int32.cook(chunk, texture.internal_format, "#{name}.internal_format")
     int32.cook(chunk, texture.format, "#{name}.format")
     int32.cook(chunk, texture.type, "#{name}.type")
-    image_chunk = Chunk.new
-    image_chunk.push(texture.pixels, "#{name} pixels")
-    chunk.add_pointer image_chunk
+    int32.cook(chunk, texture.pixels.size, "#{name}.num_mips")
+
+    mipmaps_chunk = Chunk.new
+    texture.pixels.each_with_index do |p, i|
+      image_chunk = Chunk.new
+      image_chunk.push(p, "#{name} mipmap #{i}")
+      mipmaps_chunk.add_pointer image_chunk
+    end
+    chunk.add_pointer mipmaps_chunk
   end
 
 end

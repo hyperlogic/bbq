@@ -12,7 +12,8 @@ struct OpenGLTexture
 	int internal_format;
 	int format;
 	int type;
-	void* pixels;
+	int num_mips;
+	void** pixels;
 };
 
 void* bbq_load(const char* filename);

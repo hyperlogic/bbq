@@ -75,7 +75,7 @@ void render_init()
 				 0, 
 				 s_app->background.format, 
 				 s_app->background.type, 
-				 s_app->background.pixels);
+				 s_app->background.pixels[0]);
 
 	printf("clear color = %.3f, %.3f, %.3f, %.3f\n", 
 		   s_app->clear_color.r, s_app->clear_color.g, 
