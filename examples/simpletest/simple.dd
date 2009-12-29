@@ -2,9 +2,11 @@
 
 BBQ.header do
 
+  enum Colors, {:red => 0, :blue => 1, :green => 2}
+
   struct Complex do
-    float32 real, 0
-    float32 imag, 0
+    float real, 0
+    float imag, 0
   end
 
   struct Mobius do
@@ -21,6 +23,7 @@ BBQ.header do
 
   struct Level do
     uint32 cookie, 0xbaadf00d
+    Colors color, :red
     fixed_array Tile, tiles, 4
     var_array int32, numbers
   end

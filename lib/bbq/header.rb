@@ -10,6 +10,8 @@ module BBQ
     Object.send(:define_method, :method_missing) do |sym, *args, &block|
       if sym == :struct
         CStruct.new *args, &block
+      elsif sym == :enum
+        CEnum.new *args
       elsif args.size == 0
         sym
       else

@@ -120,6 +120,11 @@ class CStruct < BaseType
     # sort values of members hash by index
     sorted_fields = @fields.values.sort_by{|f| f.index}
 
+    # Sanity check
+    if @fields.nil? or sorted_fields.nil?
+      raise "Cannot cook struct #{@type_name} with no fields : #{name}"
+    end
+
     sorted_fields.each do |field|
       type = TypeRegistry.lookup_type(field.type_name)
       debug_name = name.to_s + "." + field.field_name.to_s
@@ -135,6 +140,11 @@ class CStruct < BaseType
         when ArrayField
           chunk.align type.alignment
           array = value.send(field.field_name)
+
+          if array.nil?
+            raise "fixed_array #{@type_name}.#{field.field_name} is nil! #{name}"
+          end
+
           for i in 0...field.num_items
             type.cook chunk, array[i], debug_name + "[#{i}]"
           end
@@ -142,6 +152,11 @@ class CStruct < BaseType
           # cook array into dest_chunk
           dest_chunk = Chunk.new
           array = value.send(field.field_name)
+
+          if array.nil?
+            raise "var_array #{@type_name}.#{field.field_name} is nil! #{name}"
+          end
+
           array.each_with_index do |elem, i|
             type.cook dest_chunk, elem, debug_name + "[#{i}]"
           end

@@ -51,17 +51,17 @@ File.open(h_file, "w") do |f|
   end
 
   # collect all the types defined in this file
-  structs = []
+  types = []
   TypeRegistry.each_type_from(File.basename(dd_file)) do |type|
-    structs.push type
+    types.push type
   end
   
   # sort them in the order they were defined in
-  structs.sort! {|a,b| a.index <=> b.index}
+  types.sort! {|a,b| a.index <=> b.index}
 
-  # generate each struct declaration
-  structs.each do |struct|
-    f.print struct.declare
+  # generate each type declaration
+  types.each do |type|
+    f.print type.declare
   end
 
   # close the namespace

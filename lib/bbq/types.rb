@@ -57,6 +57,8 @@ end
 
 class BaseType
 
+  @@count = 0
+
   def initialize type_name, type_alignment, pack_str
     @type_name = type_name
     @type_alignment = type_alignment
