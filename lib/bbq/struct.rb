@@ -9,8 +9,6 @@ class CStruct < BaseType
   VarArrayField = Struct.new :index, :type_name, :field_name, :default_value
   PointerField = Struct.new :index, :type_name, :field_name, :default_value
 
-  @@count = 0
-
   def initialize type_name, &block
     @type_name = type_name
     @fields = {}
@@ -181,6 +179,51 @@ class CStruct < BaseType
         raise "Could not cook #{field.field_name} in struct #{@type_name}"
       end
     end
+
+    # find the alignment of the largest member
+    #
+    largest_alignment = 0
+    sorted_fields.each do |field|
+      type = TypeRegistry.lookup_type(field.type_name)
+      debug_name = name.to_s + "." + field.field_name.to_s
+      if type
+        case field
+        when SingleField
+          if type.alignment > largest_alignment
+            largest_alignment = type.alignment
+          end
+        when ArrayField
+          if type.alignment > largest_alignment
+            largest_alignment = type.alignment
+          end
+        when VarArrayField
+          if $LONG_PTRS
+            if 8 > largest_alignment
+              largest_alignment = 8
+            end
+          else
+            if 4 > largest_alignment
+              largest_alignment = 4
+            end
+          end
+        when PointerField
+
+          if $LONG_PTRS
+            if 8 > largest_alignment
+              largest_alignment = 8
+            end
+          else
+            if 4 > largest_alignment
+              largest_alignment = 4
+            end
+          end
+        end
+      end
+    end
+
+    # finish padding
+    chunk.align largest_alignment
+
   end
 
   def declare

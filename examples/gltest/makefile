@@ -3,9 +3,9 @@
 GCC = gcc
 
 # SDL Mac OS X
-CFLAGS = -Wall -D DARWIN -O -I /Developer/SDKs/MacOSX10.4u.sdk/System/Library/Frameworks/OpenGL.framework/Headers -I /Developer/SDKs/MacOSX10.4u.sdk/System/Library/Frameworks/GLUT.framework/Headers -I /Library/Frameworks/SDL.framework/Headers -I/usr/X11/include/freetype2 -I/usr/X11/include
+CFLAGS = -Wall -g -D DARWIN -O -I /Developer/SDKs/MacOSX10.4u.sdk/System/Library/Frameworks/OpenGL.framework/Headers -I /Developer/SDKs/MacOSX10.4u.sdk/System/Library/Frameworks/GLUT.framework/Headers `sdl-config --cflags` `freetype-config --cflags`
 
-LFLAGS = -framework Cocoa -framework OpenGL -framework GLUT -framework SDL -lstdc++ -Wl -framework CoreServices -framework ApplicationServices -Wl,-dylib_file,/System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib:/System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib
+LFLAGS = -framework Cocoa -framework OpenGL -framework GLUT -lstdc++ -Wl -framework CoreServices -framework ApplicationServices -Wl,-dylib_file,/System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib:/System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib `sdl-config --libs` `freetype-config --libs`
 
 OBJ = test.o SDLMain.o bbq.o
 
@@ -31,7 +31,7 @@ app.h : app.dd
 	bbq-burn $< app.h
 
 app.bin : app.dd app.di
-	bbq-cook app.di app.bin
+	bbq-cook -l app.di app.bin
 
 clean:
 	rm $(OBJ) test $(BBQ_HEADERS) $(BBQ_BINARIES)

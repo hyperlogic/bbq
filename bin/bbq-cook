@@ -19,6 +19,10 @@ opts = OptionParser.new do |opts|
     options[:dump] = true
   end
 
+  opts.on('-l', '--long-ptrs', 'Pointers are 64 bit') do
+    $LONG_PTRS = true
+  end
+
   opts.on('-h', '--help', 'Display this screen') do
     puts opts
     exit
@@ -65,11 +69,11 @@ class PointerTable
   def build_chunk
     @chunk = Chunk.new
     uint32 = TypeRegistry.lookup_type(:uint32)
-    uint32.cook @chunk, @ptrs.size, "pointer table size"
+    uint32.cook @chunk, @ptrs.size, "offset table size"
     @ptrs.each do |ptr|
-      uint32.cook @chunk, ptr, "pointer"
+      uint32.cook @chunk, ptr, "offset"
     end
-    uint32.cook @chunk, @ptrs.size, "pointer table size"  # output num_pointers again
+    uint32.cook @chunk, @ptrs.size, "offset table size"  # output num_pointers again
   end
 
   def chunk

@@ -7,6 +7,8 @@ int main()
 	bbq::Level* level = static_cast<bbq::Level*>(bbq_load("level.bin"));
 
 	printf("loaded level!\n");
+	printf("sizeof(Level) = %ld\n", sizeof(bbq::Level));
+	printf("sizeof(Child) = %ld\n", sizeof(bbq::Child));
 	
 	printf("level has %d children\n", level->children_size);
 

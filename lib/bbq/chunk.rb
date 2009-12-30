@@ -22,11 +22,18 @@ class Chunk
     @str.size
   end
 
+  def pad start, alignment
+    if start % alignment != 0
+      alignment - (start % alignment)
+    else
+      0
+    end
+  end
+
   def align alignment
     # insert padding, if necessary
-    if @str.size % alignment != 0
-      pad = alignment - (@str.size % alignment)
-      pad.times {@str << [0xad].pack("C")}
+    pad(@str.size, alignment).times do 
+      @str << [0xad].pack("C")
     end
   end
 
@@ -35,12 +42,18 @@ class Chunk
 
     # don't keep track of pointers to empty chunks
     if dest_chunk.size > 0
-      @pointers.push Pointer.new(@str.size, dest_chunk)
+      padding = pad(@str.size, $LONG_PTRS ? 8 : 4)
+      @pointers.push Pointer.new(@str.size + padding, dest_chunk)
     end
 
     # write out a null pointer, it will be fixed up later in resolve_pointers.
-    align TypeRegistry.lookup_type(:uint32).alignment
-    TypeRegistry.lookup_type(:uint32).cook self, 0, "pointer"
+    if $LONG_PTRS
+      align TypeRegistry.lookup_type(:uint64).alignment
+      TypeRegistry.lookup_type(:uint64).cook self, 0, "pointer 64bit"
+    else
+      align TypeRegistry.lookup_type(:uint32).alignment
+      TypeRegistry.lookup_type(:uint32).cook self, 0, "pointer 32bit"
+    end
   end
 
   def resolve_pointers
@@ -49,16 +62,21 @@ class Chunk
 
       # align the chunk, so the thing pointed to will be 4 byte aligned.
       # TODO: I should really keep track of the pointed to chunk's alignment requirements...
-      align 4      
+      align 8
 
       # resolve any pointers in the dest chunk
       ptr.dest_chunk.resolve_pointers
 
-      # cook the pointer offset into a uint32
+      # cook the pointer offset into a uint32 or uint64
       # this offset is the number of bytes from the pointer's location to the destination.
       temp = Chunk.new
       offset = @str.size - ptr.src_offset
-      TypeRegistry.lookup_type(:uint32).cook(temp, offset, "offset")
+
+      if $LONG_PTRS
+        TypeRegistry.lookup_type(:uint64).cook(temp, offset, "offset")
+      else
+        TypeRegistry.lookup_type(:uint32).cook(temp, offset, "offset")
+      end
 
       # overrite the pointer value in the @str
       @str[ptr.src_offset, temp.size] = temp.str

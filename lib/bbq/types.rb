@@ -125,8 +125,23 @@ class BoolType < BaseType
 end
 TypeRegistry.register(:bool, BoolType.new, __FILE__)
 
+# 64 bit unsigned int, little-endian byte order
+class Uint64Type < BaseType
+  def initialize
+    super "unsigned long", 8, "Q"
+  end
+end
+TypeRegistry.register(:uint64, Uint64Type.new, __FILE__)
 
-# 32 bit unsigned int, little-endian byte order# 
+# 64 bit signed int, little-endian byte order
+class Int64Type < BaseType
+  def initialize
+    super "long", 8, "q"
+  end
+end
+TypeRegistry.register(:int64, Int64Type.new, __FILE__)
+
+# 32 bit unsigned int, little-endian byte order
 class Uint32Type < BaseType
   def initialize
     super "unsigned int", 4, "I"
