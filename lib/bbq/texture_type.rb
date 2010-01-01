@@ -27,7 +27,8 @@ class OpenGLTextureType < BaseType
       w = @width
       h = @height
       i = 0
-      while [w, h].min >= 1
+      done = false
+      while !done
 
         # flip the scan lines of the image
         temp_image = "temp.#{File.extname(@filename)}"
@@ -46,9 +47,11 @@ class OpenGLTextureType < BaseType
         FileUtils.rm temp_image
 
         puts "    lod #{i} is #{w} x #{h}"
+
+        done = true if [w, h] == [1,1]
         
-        w /= 2
-        h /= 2
+        w /= 2 if w > 1
+        h /= 2 if h > 1
         i += 1
       end
 

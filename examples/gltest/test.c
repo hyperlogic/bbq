@@ -70,15 +70,18 @@ void render_init()
 	int i;
 	for (i = 0; i < s_app->background.num_mips; i++)
 	{
+		int w = (s_app->background.width >> i) > 1 ? s_app->background.width >> i : 1;
+		int h = (s_app->background.height >> i) > 1 ? s_app->background.height >> i : 1;
 		glTexImage2D(GL_TEXTURE_2D, 
 					 i, 
 					 s_app->background.internal_format, 
-					 s_app->background.width >> i, 
-					 s_app->background.height >> i, 
+					 w, 
+					 h,
 					 0, 
 					 s_app->background.format, 
 					 s_app->background.type, 
 					 s_app->background.pixels[i]);
+		printf("lod %d is (%d, %d)\n", i, w, h);
 	}
 
 	printf("clear color = %.3f, %.3f, %.3f, %.3f\n", 
