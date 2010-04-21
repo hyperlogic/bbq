@@ -21,7 +21,7 @@ class OpenGLTextureType < BaseType
       # get the image width and height
       str = `identify -format \"%[fx:w] %[fx:h]\" #{@filename}`
       @width, @height = str.split.map {|s| s.to_i}
-      puts "#{@filename} is #{@width} x #{@height}"
+      #puts "#{@filename} is #{@width} x #{@height}"
 
       @pixels = []
       w = @width
@@ -46,7 +46,7 @@ class OpenGLTextureType < BaseType
         FileUtils.rm 'pixels.dat'
         FileUtils.rm temp_image
 
-        puts "    lod #{i} is #{w} x #{h}"
+        #puts "    lod #{i} is #{w} x #{h}"
 
         done = true if [w, h] == [1,1]
         
