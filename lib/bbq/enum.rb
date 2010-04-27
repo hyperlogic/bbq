@@ -19,7 +19,7 @@ class CEnum < BaseType
     raise "enum value must be a symbol" unless value.is_a? Symbol
     comment = "(#{@type_name}) name = #{name} value = #{value}"
     num = @hash[value]
-    raise "enum value must be a FixNum" unless num.is_a? Fixnum
+    raise "enum value #{value} must be a Fixnum" unless num.is_a? Fixnum
     chunk.push([num].pack(@pack_str), comment)
   end
 
