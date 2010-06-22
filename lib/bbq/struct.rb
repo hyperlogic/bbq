@@ -180,6 +180,53 @@ class CStruct < BaseType
       end
     end
 
+    # finish padding
+    chunk.align alignment
+
+  end
+
+  def declare
+    sorted_fields = @fields.values.sort_by{|f| f.index}
+
+    # define the struct
+    lines = ["struct #{@type_name} {"]
+
+    # define each field
+    lines += sorted_fields.map do |field|
+      type = TypeRegistry.lookup_type(field.type_name)
+      if type
+        case field
+        when SingleField
+          '    ' + type.define_single(field.field_name)
+        when ArrayField
+          '    ' + type.define_array(field.field_name, field.num_items)
+        when VarArrayField
+          '    ' + type.define_ptr(field.field_name) + " " + 
+            TypeRegistry.lookup_type(:uint32).define_single("#{field.field_name}_size")
+        when PointerField
+          '    ' + type.define_ptr(field.field_name)
+        else
+          raise "Illegal field type!"
+        end
+      else
+        raise "Could not find type #{field.type_name} for struct #{@type_name}"
+      end
+    end
+
+    # close struct
+    lines += ["};\n"]
+
+    # return full string
+    lines.join "\n"
+  end
+
+  # alignment of a structure is based on the largest alignment of all the fields within it.
+  # http://blogs.msdn.com/b/larryosterman/archive/2005/04/07/406252.aspx
+  def alignment
+
+    # sort values of members hash by index
+    sorted_fields = @fields.values.sort_by{|f| f.index}
+
     # find the alignment of the largest member
     #
     largest_alignment = 0
@@ -220,52 +267,8 @@ class CStruct < BaseType
         end
       end
     end
+    largest_alignment
 
-    # finish padding
-    chunk.align largest_alignment
-
-  end
-
-  def declare
-    sorted_fields = @fields.values.sort_by{|f| f.index}
-
-    # define the struct
-    lines = ["struct #{@type_name} {"]
-
-    # define each field
-    lines += sorted_fields.map do |field|
-      type = TypeRegistry.lookup_type(field.type_name)
-      if type
-        case field
-        when SingleField
-          '    ' + type.define_single(field.field_name)
-        when ArrayField
-          '    ' + type.define_array(field.field_name, field.num_items)
-        when VarArrayField
-          '    ' + type.define_ptr(field.field_name) + " " + 
-            TypeRegistry.lookup_type(:uint32).define_single("#{field.field_name}_size")
-        when PointerField
-          '    ' + type.define_ptr(field.field_name)
-        else
-          raise "Illegal field type!"
-        end
-      else
-        raise "Could not find type #{field.type_name} for struct #{@type_name}"
-      end
-    end
-
-    # close struct
-    lines += ["};\n"]
-
-    # return full string
-    lines.join "\n"
-  end
-
-  def alignment
-    # The alignment of the first field.
-    field = @fields.values.first{|i| a.index == 0}
-    type = TypeRegistry.lookup_type(field.type_name)
-    type.alignment
   end
 
 end
