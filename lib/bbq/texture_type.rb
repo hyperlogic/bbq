@@ -11,7 +11,10 @@ class OpenGLTextureType < BaseType
     attr_reader :width, :height, :internal_format, :format, :type, :pixels
 
     # hash can have the following keys: 
-    # :filename, :has_alpha
+    # :filename => string indicating the path to the texture
+    # :has_alpha => true indicates the texture should be RGBA, false is RGB
+    # :gzip => true indicates the texture should be compressed using gzip
+    #
     def initialize hash
       hash.each do |key, value|
         instance_variable_set("@#{key}".to_sym, value)
@@ -35,15 +38,22 @@ class OpenGLTextureType < BaseType
         `convert -flip -scale #{w}x#{h} #{@filename} #{temp_image}`
 
         # stream the raw image data into a temp file
-        `stream -map #{@has_alpha ? "rgba" : "rgb"} -storage-type char #{temp_image} pixels.dat`
+        temp_stream = 'pixels.dat'
+        `stream -map #{@has_alpha ? "rgba" : "rgb"} -storage-type char #{temp_image} #{temp_stream}`
+
+        # compress using gzip
+        if @gzip
+          `gzip pixels.dat`
+          temp_stream = 'pixels.dat.gz'
+        end
 
         # read the file into @pixels
-        File.open('pixels.dat', 'rb') do |f|
+        File.open(temp_stream, 'rb') do |f|
           @pixels[i] = f.read
         end
 
         # remove the temp files
-        FileUtils.rm 'pixels.dat'
+        FileUtils.rm temp_stream
         FileUtils.rm temp_image
 
         #puts "    lod #{i} is #{w} x #{h}"
