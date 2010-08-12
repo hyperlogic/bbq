@@ -232,7 +232,7 @@ class CStruct < BaseType
     largest_alignment = 0
     sorted_fields.each do |field|
       type = TypeRegistry.lookup_type(field.type_name)
-      debug_name = name.to_s + "." + field.field_name.to_s
+      debug_name = @type_name.to_s + "." + field.field_name.to_s
       if type
         case field
         when SingleField

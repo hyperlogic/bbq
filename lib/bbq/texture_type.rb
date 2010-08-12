@@ -1,4 +1,5 @@
 require 'fileutils'
+require 'zlib'
 
 # NOTE: requires ImageMagick
 class OpenGLTextureType < BaseType
@@ -13,7 +14,7 @@ class OpenGLTextureType < BaseType
     # hash can have the following keys: 
     # :filename => string indicating the path to the texture
     # :has_alpha => true indicates the texture should be RGBA, false is RGB
-    # :gzip => true indicates the texture should be compressed using gzip
+    # :zlib => true indicates the texture should be deflated using zlib
     #
     def initialize hash
       hash.each do |key, value|
@@ -41,15 +42,13 @@ class OpenGLTextureType < BaseType
         temp_stream = 'pixels.dat'
         `stream -map #{@has_alpha ? "rgba" : "rgb"} -storage-type char #{temp_image} #{temp_stream}`
 
-        # compress using gzip
-        if @gzip
-          `gzip pixels.dat`
-          temp_stream = 'pixels.dat.gz'
-        end
-
         # read the file into @pixels
         File.open(temp_stream, 'rb') do |f|
-          @pixels[i] = f.read
+          if @zlib
+            @pixels[i] = Zlib::Deflate.deflate(f.read, Zlib::DEFAULT_COMPRESSION)
+          else
+            @pixels[i] = f.read
+          end
         end
 
         # remove the temp files
