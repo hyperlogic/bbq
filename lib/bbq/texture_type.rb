@@ -35,7 +35,7 @@ class OpenGLTextureType < BaseType
       while !done
 
         # flip the scan lines of the image
-        temp_image = "temp.#{File.extname(@filename)}"
+        temp_image = "temp#{File.extname(@filename)}"
         `convert -flip -scale #{w}x#{h} #{@filename} #{temp_image}`
 
         # stream the raw image data into a temp file
@@ -63,7 +63,6 @@ class OpenGLTextureType < BaseType
         h /= 2 if h > 1
         i += 1
       end
-
 
       # set format fields
       format = @has_alpha ? GL_RGBA : GL_RGB
