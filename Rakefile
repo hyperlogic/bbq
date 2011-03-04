@@ -16,18 +16,25 @@ spec = Gem::Specification.new do |s|
 end
 Rake::GemPackageTask.new(spec).define
 
-def shell cmd
-  puts cmd
-  result = `#{cmd} 2>&1`
-  result.each {|line| print line}
+# figure out the build platform
+case `uname`.chomp
+when /mingw32.*/i
+  $PLATFORM = :windows
+when "Darwin"
+  $PLATFORM = :darwin
+when "Linux"
+  $PLATFORM = :linux
+else
+  $PLATFORM = :unknown
 end
 
 desc "rebuild gem and install"
 task :install => :repackage do
+  gem_command = $PLATFORM = :windows ? "gem" : "sudo gem"
   installed_gems = `gem list`
   if installed_gems =~ /bbq/
-    shell 'sudo gem uninstall bbq -x'
+    sh "#{gem_command} uninstall bbq -x"
   end
-  shell "sudo gem install #{Dir["pkg/*"][0]}"
+  sh "#{gem_command} install #{Dir["pkg/*"][0]}"
 end
 
