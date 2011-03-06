@@ -94,7 +94,7 @@ chunk.pointers.each do |ptr|
 end
 pointer_table.build_chunk
 
-File.open(bin_file, "w") do |f|
+File.open(bin_file, "wb") do |f|
 
   # output pointer table
   f.print pointer_table.chunk.str
