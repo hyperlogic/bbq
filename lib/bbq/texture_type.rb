@@ -34,12 +34,13 @@ class OpenGLTextureType < BaseType
       done = false
       while !done
 
-        # flip the scan lines of the image
-        temp_image = "temp#{File.extname(@filename)}"
-        `convert -flip -scale #{w}x#{h} #{@filename} #{temp_image}`
+        # convert to a tga, which should also flip the scan lines of the image.
+        # NOTE: using tga instead of png, to work around bug in some versions of imagemagick.
+        temp_image = "temp_#{w}x#{h}.tga"
+        `convert -scale #{w}x#{h} #{@filename} #{temp_image}`
 
         # stream the raw image data into a temp file
-        temp_stream = 'pixels.dat'
+        temp_stream = "pixels_#{w}x#{h}.dat"
         `stream -map #{@has_alpha ? "rgba" : "rgb"} -storage-type char #{temp_image} #{temp_stream}`
 
         # read the file into @pixels
@@ -58,7 +59,7 @@ class OpenGLTextureType < BaseType
         #puts "    lod #{i} is #{w} x #{h}"
 
         done = true if [w, h] == [1,1]
-        
+
         w /= 2 if w > 1
         h /= 2 if h > 1
         i += 1
