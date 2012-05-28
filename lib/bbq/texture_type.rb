@@ -11,7 +11,7 @@ class OpenGLTextureType < BaseType
   class Texture
     attr_reader :width, :height, :internal_format, :format, :type, :pixels
 
-    # hash can have the following keys: 
+    # hash can have the following keys:
     # :filename => string indicating the path to the texture
     # :has_alpha => true indicates the texture should be RGBA, false is RGB
     # :zlib => true indicates the texture should be deflated using zlib
@@ -34,10 +34,9 @@ class OpenGLTextureType < BaseType
       done = false
       while !done
 
-        # convert to a tga, which should also flip the scan lines of the image.
-        # NOTE: using tga instead of png, to work around bug in some versions of imagemagick.
+        # use sips to resize the image. (because imagemagick convert is buggy)
         temp_image = "temp_#{w}x#{h}.tga"
-        `convert -scale #{w}x#{h} #{@filename} #{temp_image}`
+        `sips -s format tga --flip vertical --resampleHeightWidth #{h} #{w} #{@filename} --out #{temp_image}`
 
         # stream the raw image data into a temp file
         temp_stream = "pixels_#{w}x#{h}.dat"
@@ -76,7 +75,7 @@ class OpenGLTextureType < BaseType
   def initialize
     super "struct OpenGLTexture", 4, nil
   end
-  
+
   def cook chunk, value, name
 
     # load the texture
