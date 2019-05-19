@@ -1,8 +1,8 @@
 BBQ : Cooking Data with Ruby
 -----------------------------------
 
-Let’s say your doing some embedded game development and your data is generated 
-procedurally in Ruby. How do you get data from Ruby into a binary form, so that 
+Let’s say your doing some embedded game development and your data is generated
+procedurally in Ruby. How do you get data from Ruby into a binary form, so that
 you can access it directly from a C structure?
 
 With BBQ, that’s how.
@@ -13,7 +13,7 @@ BBQ is a set of tools that do the following:
 
  * Generates a c header file from a data description file.
  * Cooks data from a data instance file into a binary blob.
- * Loads in the binary blob into memory on the target machine, so you don’t have 
+ * Loads in the binary blob into memory on the target machine, so you don’t have
    to do any messy serialization work.
 
 Data Definition
@@ -34,10 +34,10 @@ BBQ.header do
   end
 end
 
-Looks a lot like a C header file right? Well, that’s because it gets turned into 
+Looks a lot like a C header file right? Well, that’s because it gets turned into
 one when you run the burn tool.
 
-The values 0xfeedf00d & 0xbaadf00d are defaults. They can be overridden in the data 
+The values 0xfeedf00d & 0xbaadf00d are defaults. They can be overridden in the data
 instance file.
 
 Generating Header Files with Burn
@@ -75,10 +75,10 @@ BBQ.data do
                             Child.build(:numbers => [5])])
 end
 
-This data file sets up a “level” with 3 children. The first child has numbers (1,2,3) 
+This data file sets up a “level” with 3 children. The first child has numbers (1,2,3)
 the second (3,4) and the third a single number 5.
 
-Notice that because we didn’t specify values for the cookie fields they will just use 
+Notice that because we didn’t specify values for the cookie fields they will just use
 their defaults.
 
 Now let’s cook this sucker:
@@ -89,8 +89,8 @@ Now you end up with a binary blob ready to be copied over to your target device.
 
 Loading the Data on the Target
 --------------------------------------
-First, make sure you add bbq.cpp to your code’s project file. Then you can use the 
-bbq_load() function to read in the binary file and give you back a pointer to the root 
+First, make sure you add bbq.cpp to your code’s project file. Then you can use the
+bbq_load() function to read in the binary file and give you back a pointer to the root
 of it so you can use it directly.
 
 Here’s how:
@@ -104,7 +104,7 @@ int main()
     Level* level = (Level*)bbq_load("level.bin");
 
     printf("loaded level!\n");
-	
+
     printf("level has %d children\n", level->children_size);
 
     for (unsigned int i = 0; i < level->children_size; ++i)
@@ -131,4 +131,3 @@ level has 3 children
         [ 3 4 ]
     child 2 has 1 numbers
         [ 5 ]
-

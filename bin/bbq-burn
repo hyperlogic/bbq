@@ -1,4 +1,4 @@
-#!/opt/local/bin/ruby
+#!/usr/bin/ruby
 
 #
 # bbq-burn - generates a header from a .dd file
@@ -56,7 +56,7 @@ File.open(h_file, "w") do |f|
   TypeRegistry.each_type_from(File.basename(dd_file)) do |type|
     types.push type
   end
-  
+
   # sort them in the order they were defined in
   types.sort! {|a,b| a.index <=> b.index}
 

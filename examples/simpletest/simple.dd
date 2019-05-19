@@ -4,16 +4,16 @@ BBQ.header do
 
   enum Colors, {:red => 0, :blue => 1, :green => 2}
 
-  struct Complex do
+  struct Imaginary do
     float real, 0
     float imag, 0
   end
 
   struct Mobius do
-    Complex a
-    Complex b
-    Complex c
-    Complex d
+    Imaginary a
+    Imaginary b
+    Imaginary c
+    Imaginary d
     int32 conj, 0
   end
 

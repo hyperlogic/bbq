@@ -1,4 +1,4 @@
-#!/opt/local/bin/ruby
+#!/usr/bin/ruby
 
 #
 # bbq-cook - generates a binary blob from a .di file
@@ -45,7 +45,7 @@ module BBQ
       result
     else
       super name
-    end      
+    end
   end
 end
 
@@ -151,4 +151,3 @@ if options[:dump]
   pretty_print_chunk pointer_table.chunk, 0
   pretty_print_chunk chunk, pointer_table.chunk.size
 end
-
