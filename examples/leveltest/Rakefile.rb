@@ -13,7 +13,7 @@ $link_flags = []
 def shell cmd
   puts cmd if $verbose
   result = `#{cmd} 2>&1`
-  result.each {|line| print line}
+  result.each_line {|line| print line}
 end
 
 def compile obj, src
@@ -22,7 +22,7 @@ def compile obj, src
   shell cmd
 end
 
-def link exe, objects
+def link_exe exe, objects
   puts "    Linking #{exe}"
   cmd = "g++ #{objects.join " "} -o #{exe} #{$link_flags.join " "}"
   shell cmd
@@ -31,7 +31,7 @@ end
 # generate binary blob
 file 'level.bin' => ['level.dd', 'level.di'] do
   puts '    Generating level.bin'
-  shell 'bbq-cook level.di level.bin'
+  shell 'bbq-cook -l level.di level.bin'
 end
 
 # generate header
@@ -49,7 +49,7 @@ file 'test.o' => ['bbq.h', 'level.h', 'test.cpp'] do
 end
 
 file 'test' => ['bbq.o', 'test.o'] do
-  link 'test', ['bbq.o', 'test.o']
+  link_exe 'test', ['bbq.o', 'test.o']
 end
 
 task :default => ['test', 'level.bin'] do
