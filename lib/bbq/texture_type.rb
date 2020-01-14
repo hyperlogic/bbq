@@ -23,7 +23,7 @@ class OpenGLTextureType < BaseType
       raise "Texture has no filename" unless @filename
 
       # get the image width and height
-      str = `identify -format \"%[fx:w] %[fx:h]\" #{@filename}`
+      str = `magick identify -format \"%[fx:w] %[fx:h]\" #{@filename}`
       @width, @height = str.split.map {|s| s.to_i}
       #puts "#{@filename} is #{@width} x #{@height}"
 
@@ -36,11 +36,12 @@ class OpenGLTextureType < BaseType
 
         # use sips to resize the image. (because imagemagick convert is buggy)
         temp_image = "temp_#{w}x#{h}.tga"
-        `sips -s format tga --flip vertical --resampleHeightWidth #{h} #{w} #{@filename} --out #{temp_image}`
+        #`sips -s format tga --flip vertical --resampleHeightWidth #{h} #{w} #{@filename} --out #{temp_image}`
+        `magick convert -scale #{w}x#{h} #{@filename} #{temp_image}`
 
         # stream the raw image data into a temp file
         temp_stream = "pixels_#{w}x#{h}.dat"
-        `stream -map #{@has_alpha ? "rgba" : "rgb"} -storage-type char #{temp_image} #{temp_stream}`
+        `magick stream -map #{@has_alpha ? "rgba" : "rgb"} -storage-type char #{temp_image} #{temp_stream}`
 
         # read the file into @pixels
         File.open(temp_stream, 'rb') do |f|
