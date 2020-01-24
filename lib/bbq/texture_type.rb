@@ -34,10 +34,10 @@ class OpenGLTextureType < BaseType
       done = false
       while !done
 
-        # use sips to resize the image. (because imagemagick convert is buggy)
+        # use imagemagick to resize the image. (sips is macos only)
         temp_image = "temp_#{w}x#{h}.tga"
         #`sips -s format tga --flip vertical --resampleHeightWidth #{h} #{w} #{@filename} --out #{temp_image}`
-        `magick convert -scale #{w}x#{h} #{@filename} #{temp_image}`
+        `magick convert -flip -scale #{w}x#{h} #{@filename} #{temp_image}`
 
         # stream the raw image data into a temp file
         temp_stream = "pixels_#{w}x#{h}.dat"
