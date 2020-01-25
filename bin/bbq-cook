@@ -125,7 +125,7 @@ def pretty_print_chunk chunk, offset
     end
 
     print " " if i % 4 == 0
-    print "%02x " % chunk.str[i]
+    print "%02x " % chunk.str[i].codepoints[0]
   end
 
   first = true
